@@ -3,7 +3,7 @@ import type { Product, User } from './types';
 // Placeholder com nome do produto usando dummyimage.com
 const placeholderImage = (productName: string, index: number) => {
   const encodedName = encodeURIComponent(productName.substring(0, 40));
-  return `https://dummyimage.com/600x600/1f2937/e5e7eb.png&text=${encodedName}+${index}`;
+  return `https://dummyimage.com/600x600/1f2937/e5e7eb.png?text=${encodedName}+${index}`;
 };
 
 export const mockProducts: Product[] = [
