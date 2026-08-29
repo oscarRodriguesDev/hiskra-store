@@ -1,8 +1,10 @@
 import type { Product, User } from './types';
 
-// Imagens placeholder usando picsum.photos
-const placeholderImage = (id: number, category: string) =>
-  `https://picsum.photos/seed/${category}-${id}/600/600.jpg`;
+// Placeholder com nome do produto usando dummyimage.com
+const placeholderImage = (productName: string, index: number) => {
+  const encodedName = encodeURIComponent(productName.substring(0, 40));
+  return `https://dummyimage.com/600x600/1f2937/e5e7eb.png&text=${encodedName}+${index}`;
+};
 
 export const mockProducts: Product[] = [
   // Processadores
@@ -15,8 +17,8 @@ export const mockProducts: Product[] = [
     price: 219990, // R$ 2.199,90
     compareAtPrice: 249990,
     images: [
-      placeholderImage(1, 'cpu-amd'),
-      placeholderImage(2, 'cpu-amd'),
+      placeholderImage('AMD Ryzen 7 7800X3D', 1),
+      placeholderImage('AMD Ryzen 7 7800X3D', 2),
     ],
     category: 'Processadores',
     stock: 15,
@@ -35,8 +37,8 @@ export const mockProducts: Product[] = [
     price: 239990,
     compareAtPrice: 269990,
     images: [
-      placeholderImage(3, 'cpu-intel'),
-      placeholderImage(4, 'cpu-intel'),
+      placeholderImage('Intel Core i7-14700K', 1),
+      placeholderImage('Intel Core i7-14700K', 2),
     ],
     category: 'Processadores',
     stock: 12,
@@ -57,8 +59,8 @@ export const mockProducts: Product[] = [
     price: 389990,
     compareAtPrice: 429990,
     images: [
-      placeholderImage(5, 'gpu-nvidia'),
-      placeholderImage(6, 'gpu-nvidia'),
+      placeholderImage('NVIDIA GeForce RTX 4070 Super 12GB', 1),
+      placeholderImage('NVIDIA GeForce RTX 4070 Super 12GB', 2),
     ],
     category: 'Placas de Vídeo',
     stock: 8,
@@ -76,8 +78,8 @@ export const mockProducts: Product[] = [
     shortDescription: 'RX 7900 XTX 24GB GDDR6, RDNA 3, flagship AMD.',
     price: 549990,
     images: [
-      placeholderImage(7, 'gpu-amd'),
-      placeholderImage(8, 'gpu-amd'),
+      placeholderImage('AMD Radeon RX 7900 XTX 24GB', 1),
+      placeholderImage('AMD Radeon RX 7900 XTX 24GB', 2),
     ],
     category: 'Placas de Vídeo',
     stock: 5,
@@ -98,8 +100,8 @@ export const mockProducts: Product[] = [
     price: 64990,
     compareAtPrice: 74990,
     images: [
-      placeholderImage(9, 'ram-corsair'),
-      placeholderImage(10, 'ram-corsair'),
+      placeholderImage('Corsair Vengeance RGB 32GB DDR5 6000MHz', 1),
+      placeholderImage('Corsair Vengeance RGB 32GB DDR5 6000MHz', 2),
     ],
     category: 'Memória RAM',
     stock: 25,
@@ -117,8 +119,8 @@ export const mockProducts: Product[] = [
     shortDescription: 'Trident Z5 32GB DDR5 6400MHz CL32 RGB premium.',
     price: 89990,
     images: [
-      placeholderImage(11, 'ram-gskill'),
-      placeholderImage(12, 'ram-gskill'),
+      placeholderImage('G.Skill Trident Z5 RGB 32GB DDR5 6400MHz', 1),
+      placeholderImage('G.Skill Trident Z5 RGB 32GB DDR5 6400MHz', 2),
     ],
     category: 'Memória RAM',
     stock: 18,
@@ -139,8 +141,8 @@ export const mockProducts: Product[] = [
     price: 79990,
     compareAtPrice: 94990,
     images: [
-      placeholderImage(13, 'ssd-samsung'),
-      placeholderImage(14, 'ssd-samsung'),
+      placeholderImage('Samsung 990 PRO 2TB NVMe', 1),
+      placeholderImage('Samsung 990 PRO 2TB NVMe', 2),
     ],
     category: 'Armazenamento',
     stock: 30,
@@ -159,8 +161,8 @@ export const mockProducts: Product[] = [
     price: 44990,
     compareAtPrice: 52990,
     images: [
-      placeholderImage(15, 'ssd-wd'),
-      placeholderImage(16, 'ssd-wd'),
+      placeholderImage('WD BLACK SN850X 1TB NVMe', 1),
+      placeholderImage('WD BLACK SN850X 1TB NVMe', 2),
     ],
     category: 'Armazenamento',
     stock: 35,
@@ -181,8 +183,8 @@ export const mockProducts: Product[] = [
     price: 149990,
     compareAtPrice: 169990,
     images: [
-      placeholderImage(17, 'mobo-asus'),
-      placeholderImage(18, 'mobo-asus'),
+      placeholderImage('ASUS ROG STRIX B650E-F Gaming WiFi', 1),
+      placeholderImage('ASUS ROG STRIX B650E-F Gaming WiFi', 2),
     ],
     category: 'Placas-mãe',
     stock: 10,
@@ -200,8 +202,8 @@ export const mockProducts: Product[] = [
     shortDescription: 'Placa-mãe LGA1700 Z790, DDR5, PCIe 5.0, WiFi 7.',
     price: 179990,
     images: [
-      placeholderImage(19, 'mobo-msi'),
-      placeholderImage(20, 'mobo-msi'),
+      placeholderImage('MSI MPG Z790 CARBON WiFi', 1),
+      placeholderImage('MSI MPG Z790 CARBON WiFi', 2),
     ],
     category: 'Placas-mãe',
     stock: 8,
@@ -222,8 +224,8 @@ export const mockProducts: Product[] = [
     price: 74990,
     compareAtPrice: 84990,
     images: [
-      placeholderImage(21, 'psu-corsair'),
-      placeholderImage(22, 'psu-corsair'),
+      placeholderImage('Corsair RM1000e 1000W 80+ Gold', 1),
+      placeholderImage('Corsair RM1000e 1000W 80+ Gold', 2),
     ],
     category: 'Fontes',
     stock: 20,
@@ -241,8 +243,8 @@ export const mockProducts: Product[] = [
     shortDescription: 'Seasonic Focus GX-850 850W Gold full modular, 10 anos garantia.',
     price: 59990,
     images: [
-      placeholderImage(23, 'psu-seasonic'),
-      placeholderImage(24, 'psu-seasonic'),
+      placeholderImage('Seasonic Focus GX-850 850W Gold', 1),
+      placeholderImage('Seasonic Focus GX-850 850W Gold', 2),
     ],
     category: 'Fontes',
     stock: 22,
@@ -263,8 +265,8 @@ export const mockProducts: Product[] = [
     price: 54990,
     compareAtPrice: 62990,
     images: [
-      placeholderImage(25, 'case-lianli'),
-      placeholderImage(26, 'case-lianli'),
+      placeholderImage('Lian Li LANCOOL 216 RGB', 1),
+      placeholderImage('Lian Li LANCOOL 216 RGB', 2),
     ],
     category: 'Gabinetes',
     stock: 18,
@@ -282,8 +284,8 @@ export const mockProducts: Product[] = [
     shortDescription: 'Gabinete design escandinavo, painel madeira, 2x Aspect 14 PWM.',
     price: 69990,
     images: [
-      placeholderImage(27, 'case-fractal'),
-      placeholderImage(28, 'case-fractal'),
+      placeholderImage('Fractal Design North Charcoal', 1),
+      placeholderImage('Fractal Design North Charcoal', 2),
     ],
     category: 'Gabinetes',
     stock: 12,
@@ -304,8 +306,8 @@ export const mockProducts: Product[] = [
     price: 89990,
     compareAtPrice: 99990,
     images: [
-      placeholderImage(29, 'aio-nzxt'),
-      placeholderImage(30, 'aio-nzxt'),
+      placeholderImage('NZXT Kraken 360 RGB', 1),
+      placeholderImage('NZXT Kraken 360 RGB', 2),
     ],
     category: 'Water Coolers',
     stock: 10,
@@ -323,8 +325,8 @@ export const mockProducts: Product[] = [
     shortDescription: 'AIO 360mm, offset VRAM, 3x P14 PWM, 6 anos garantia.',
     price: 64990,
     images: [
-      placeholderImage(31, 'aio-arctic'),
-      placeholderImage(32, 'aio-arctic'),
+      placeholderImage('ARCTIC Liquid Freezer III 360', 1),
+      placeholderImage('ARCTIC Liquid Freezer III 360', 2),
     ],
     category: 'Water Coolers',
     stock: 15,
@@ -345,8 +347,8 @@ export const mockProducts: Product[] = [
     price: 89990,
     compareAtPrice: 99990,
     images: [
-      placeholderImage(33, 'kb-keychron'),
-      placeholderImage(34, 'kb-keychron'),
+      placeholderImage('Keychron Q1 Pro Wireless', 1),
+      placeholderImage('Keychron Q1 Pro Wireless', 2),
     ],
     category: 'Teclados',
     stock: 20,
@@ -364,8 +366,8 @@ export const mockProducts: Product[] = [
     shortDescription: 'TKL wireless Lightspeed, switches low-profile GL, alumínio, 40h bateria.',
     price: 119990,
     images: [
-      placeholderImage(35, 'kb-logitech'),
-      placeholderImage(36, 'kb-logitech'),
+      placeholderImage('Logitech G915 TKL Lightspeed', 1),
+      placeholderImage('Logitech G915 TKL Lightspeed', 2),
     ],
     category: 'Teclados',
     stock: 14,
@@ -386,8 +388,8 @@ export const mockProducts: Product[] = [
     price: 79990,
     compareAtPrice: 89990,
     images: [
-      placeholderImage(37, 'mouse-logitech'),
-      placeholderImage(38, 'mouse-logitech'),
+      placeholderImage('Logitech G Pro X Superlight 2', 1),
+      placeholderImage('Logitech G Pro X Superlight 2', 2),
     ],
     category: 'Mouses',
     stock: 30,
@@ -405,8 +407,8 @@ export const mockProducts: Product[] = [
     shortDescription: 'Mouse ergonômico 63g, Focus Pro 30K, HyperSpeed, 90h.',
     price: 74990,
     images: [
-      placeholderImage(39, 'mouse-razer'),
-      placeholderImage(40, 'mouse-razer'),
+      placeholderImage('Razer DeathAdder V3 Pro', 1),
+      placeholderImage('Razer DeathAdder V3 Pro', 2),
     ],
     category: 'Mouses',
     stock: 25,
@@ -427,8 +429,8 @@ export const mockProducts: Product[] = [
     price: 249990,
     compareAtPrice: 289990,
     images: [
-      placeholderImage(41, 'monitor-lg'),
-      placeholderImage(42, 'monitor-lg'),
+      placeholderImage('LG UltraGear 27GP95R 4K 144Hz', 1),
+      placeholderImage('LG UltraGear 27GP95R 4K 144Hz', 2),
     ],
     category: 'Monitores',
     stock: 10,
@@ -446,8 +448,8 @@ export const mockProducts: Product[] = [
     shortDescription: 'Monitor 32" QHD 240Hz 1000R curvo, VA, HDR600, HDMI 2.1.',
     price: 189990,
     images: [
-      placeholderImage(43, 'monitor-samsung'),
-      placeholderImage(44, 'monitor-samsung'),
+      placeholderImage('Samsung Odyssey G7 32 QHD 240Hz', 1),
+      placeholderImage('Samsung Odyssey G7 32 QHD 240Hz', 2),
     ],
     category: 'Monitores',
     stock: 8,
@@ -468,8 +470,8 @@ export const mockProducts: Product[] = [
     price: 129990,
     compareAtPrice: 149990,
     images: [
-      placeholderImage(45, 'headset-steelseries'),
-      placeholderImage(46, 'headset-steelseries'),
+      placeholderImage('SteelSeries Arctis Nova Pro Wireless', 1),
+      placeholderImage('SteelSeries Arctis Nova Pro Wireless', 2),
     ],
     category: 'Headsets',
     stock: 12,
@@ -487,8 +489,8 @@ export const mockProducts: Product[] = [
     shortDescription: 'Headset wireless 300h bateria, dual chamber 50mm, DTS:X.',
     price: 89990,
     images: [
-      placeholderImage(47, 'headset-hyperx'),
-      placeholderImage(48, 'headset-hyperx'),
+      placeholderImage('HyperX Cloud Alpha Wireless', 1),
+      placeholderImage('HyperX Cloud Alpha Wireless', 2),
     ],
     category: 'Headsets',
     stock: 18,
