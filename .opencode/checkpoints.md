@@ -13,6 +13,7 @@ Consulte no início de cada interação para saber onde parou.
 - `POST /api/ml/links` aceita `{ item }` (scrape) ou `{ url }` (API).
 - Admin: lista da vitrine com "Adicionar" por produto.
 - Build OK. Pendência de KV (persistência) adiada pelo usuário.
+- `next.config.ts`: liberados domínios de imagem do ML (`http2.mlstatic.com`, `http.mlstatic.com`, `mlstatic.com`) — fotos dos produtos vinham bloqueadas pelo Next Image.
 
 ## Sessão 2026-08-30 — Painel de links ML + vitrine de afiliados
 
