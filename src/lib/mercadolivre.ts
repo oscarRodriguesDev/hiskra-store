@@ -27,6 +27,7 @@ export interface MLProduct {
   tags: string[];
   catalog_product_id: string | null;
   domain_id: string;
+  category_id?: string;
 }
 
 export interface MLSearchResponse {
