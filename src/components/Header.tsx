@@ -3,12 +3,10 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useCart } from '@/context/CartContext';
-import { useAuth } from '@/context/AuthContext';
 import { CartDrawer } from './CartDrawer';
 
 export function Header() {
   const { getItemCount } = useCart();
-  const { user, logout, isLoaded } = useAuth();
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const itemCount = getItemCount();
@@ -29,15 +27,6 @@ export function Header() {
           <div className="hidden md:flex md:items-center md:gap-8">
             <Link href="/products" className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors">
               Produtos
-            </Link>
-            <Link href="/products?category=Camisetas" className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors">
-              Camisetas
-            </Link>
-            <Link href="/products?category=Moletons" className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors">
-              Moletons
-            </Link>
-            <Link href="/products?category=Acessórios" className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors">
-              Acessórios
             </Link>
           </div>
 
@@ -72,60 +61,18 @@ export function Header() {
               )}
             </button>
 
-            {/* Auth / User Menu */}
-            {isLoaded ? (
-              user ? (
-                <div className="relative">
-                  <button
-                    onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                    className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 rounded-lg hover:bg-gray-100 transition-colors"
-                  >
-                    <span className="hidden sm:block">{user.name}</span>
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </button>
-
-                  {isMobileMenuOpen && (
-                    <>
-                      <div className="fixed inset-0 z-40" onClick={() => setIsMobileMenuOpen(false)} />
-                      <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-100 py-1 z-50 animate-in slide-in-from-top-2 duration-200">
-                        <Link
-                          href="/account"
-                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                          onClick={() => setIsMobileMenuOpen(false)}
-                        >
-                          Minha conta
-                        </Link>
-                        <Link
-                          href="/orders"
-                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                          onClick={() => setIsMobileMenuOpen(false)}
-                        >
-                          Meus pedidos
-                        </Link>
-                        <hr className="my-1 border-gray-100" />
-                        <button
-                          onClick={() => { logout(); setIsMobileMenuOpen(false); }}
-                          className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
-                        >
-                          Sair
-                        </button>
-                      </div>
-                    </>
-                  )}
-                </div>
-              ) : (
-                <Link
-                  href="/auth"
-                  className="px-4 py-2 text-sm font-semibold text-white bg-black rounded-lg hover:bg-gray-900 transition-colors"
-                >
-                  Entrar / Cadastrar
-                </Link>
-              )
-            ) : (
-              <div className="w-24 h-10 bg-gray-200 animate-pulse rounded" />
-            )}
+            {/* Painel (admin) */}
+            <Link
+              href="/admin"
+              title="Painel do administrador"
+              className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 rounded-lg hover:bg-gray-100 transition-colors"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              <span className="hidden sm:block">Painel</span>
+            </Link>
           </div>
         </div>
 
@@ -144,33 +91,9 @@ export function Header() {
               <Link href="/products" className="block py-2 text-sm font-medium text-gray-700 hover:text-gray-900" onClick={() => setIsMobileMenuOpen(false)}>
                 Produtos
               </Link>
-              <Link href="/products?category=Camisetas" className="block py-2 text-sm font-medium text-gray-700 hover:text-gray-900" onClick={() => setIsMobileMenuOpen(false)}>
-                Camisetas
+              <Link href="/admin" className="block py-2 text-sm font-medium text-gray-700 hover:text-gray-900" onClick={() => setIsMobileMenuOpen(false)}>
+                Painel
               </Link>
-              <Link href="/products?category=Moletons" className="block py-2 text-sm font-medium text-gray-700 hover:text-gray-900" onClick={() => setIsMobileMenuOpen(false)}>
-                Moletons
-              </Link>
-              <Link href="/products?category=Acessórios" className="block py-2 text-sm font-medium text-gray-700 hover:text-gray-900" onClick={() => setIsMobileMenuOpen(false)}>
-                Acessórios
-              </Link>
-              <hr className="border-gray-100" />
-              {user ? (
-                <>
-                  <Link href="/account" className="block py-2 text-sm font-medium text-gray-700" onClick={() => setIsMobileMenuOpen(false)}>
-                    Minha conta
-                  </Link>
-                  <Link href="/orders" className="block py-2 text-sm font-medium text-gray-700" onClick={() => setIsMobileMenuOpen(false)}>
-                    Meus pedidos
-                  </Link>
-                  <button onClick={() => { logout(); setIsMobileMenuOpen(false); }} className="w-full text-left py-2 text-sm font-medium text-red-600">
-                    Sair
-                  </button>
-                </>
-              ) : (
-                <Link href="/auth" className="block py-2 text-sm font-medium text-gray-700" onClick={() => setIsMobileMenuOpen(false)}>
-                  Entrar / Cadastrar
-                </Link>
-              )}
             </div>
           )}
         </div>

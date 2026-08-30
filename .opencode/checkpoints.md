@@ -5,7 +5,14 @@ Consulte no início de cada interação para saber onde parou.
 
 ---
 
-## Sessão 2026-08-30 — Admin protegido com login
+## Sessão 2026-08-30 — Header limpo para a primeira etapa
+
+- Removidas categorias mortas do template (Camisetas/Moletons/Acessórios — links `/products?category=...` que nem existiam) do header desktop e mobile. Nav agora: **Produtos** (+ Painel).
+- Removido do header o bloco de conta de clientes ("Entrar / Cadastrar", "Minha conta", "Meus pedidos", menu de usuário e skeleton) — não faz sentido para loja de afiliado com um único admin. `useAuth` deixou de ser usado pelo Header (AuthContext/CartContext permanecem para o carrinho).
+- No lugar: link discreto "Painel" (ícone de engrenagem) → `/admin` (que redireciona a `/login` quando não autenticado) — sem "opção de entrar" exposta no header público.
+- Build OK. Próximos: publicar mais produtos, ads, monitorar comissão no relatório do ML.
+
+---
 
 - Usuário pediu proteção do `/admin` (só ele publica produtos). Credenciais: `demo@hiskra.com` / `demo123`.
 - `src/lib/admin-auth.ts`: sessão em cookie httpOnly assinado HMAC-SHA256 (Web Crypto, sem libs) — `signSession`/`verifySession`/`isAdminRequest`/`getSessionToken`/`validateCredentials`/`cookieOptions`; envs `ADMIN_EMAIL`/`ADMIN_PASSWORD`/`ADMIN_SECRET` com fallback demo; expiração 7 dias.
