@@ -147,6 +147,10 @@ export default function AdminLinksPage() {
             Cole seu link de afiliado (ex: <span className="font-mono text-sm">https://meli.la/XXXXXX</span>) e o
             sistema busca os anúncios da sua vitrine — sem credenciais. Escolha quais mostrar na loja.
           </p>
+          <p className="mt-2 text-sm text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2">
+            Cada produto salvo usa o link da sua vitrine com o seu vínculo (matt_word/matt_tool) — toda venda
+            feita por esses links é atribuída a você.
+          </p>
         </div>
 
         {/* Buscar link */}

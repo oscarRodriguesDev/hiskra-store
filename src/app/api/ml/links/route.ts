@@ -6,6 +6,7 @@ import {
   generateAffiliateLink,
 } from '@/lib/mercadolivre';
 import type { ScrapedMLProduct } from '@/lib/ml-scrape';
+import { hasAffiliateTracking } from '@/lib/ml-scrape';
 import { getStoredItems, addStoredItem } from '@/lib/ml-store';
 
 export const dynamic = 'force-dynamic';
@@ -56,6 +57,19 @@ export async function POST(request: NextRequest) {
     if (!it.title || !it.permalink) {
       return NextResponse.json({ error: 'Item incompleto para salvar.' }, { status: 400 });
     }
+
+    // Garantia de vínculo: sem matt_word/matt_tool a venda não cai na sua conta
+    const affiliateLink = it.affiliateUrl || it.permalink;
+    if (!hasAffiliateTracking(affiliateLink)) {
+      return NextResponse.json(
+        {
+          error: 'Este produto vem sem o vínculo de afiliado — a venda não seria atribuída a você.',
+          dica: 'Adicione pelo link da sua vitrine (meli.la/...): o sistema salva o link certo automaticamente.',
+        },
+        { status: 400 }
+      );
+    }
+
     const itemId = it.itemId || it.productId || it.userProductId || it.permalink;
     const stored = await addStoredItem({
       itemId,
@@ -65,7 +79,7 @@ export async function POST(request: NextRequest) {
       currencyId: it.currency,
       image: it.imageUrl,
       permalink: it.permalink,
-      affiliateLink: it.affiliateUrl || it.permalink,
+      affiliateLink,
       sellerNickname: undefined,
       categoryId: undefined,
     });
@@ -94,6 +108,17 @@ export async function POST(request: NextRequest) {
     const product = convertMLToProduct(mlProduct);
     const permalink = mlProduct.permalink;
     const affiliateLink = generateAffiliateLink(permalink);
+
+    // Garantia de vínculo: sem matt_word/matt_tool a venda não cai na sua conta
+    if (!hasAffiliateTracking(affiliateLink)) {
+      return NextResponse.json(
+        {
+          error: 'Este ID de anúncio não tem vínculo de afiliado — a venda não seria atribuída a você.',
+          dica: 'Use o link curto da sua vitrine (meli.la/...) para adicionar produtos com a comissão garantida.',
+        },
+        { status: 400 }
+      );
+    }
 
     const stored = await addStoredItem({
       itemId: mlProduct.id,

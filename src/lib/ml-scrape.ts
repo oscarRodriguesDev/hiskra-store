@@ -27,6 +27,16 @@ export function isShortLink(input: string): boolean {
   return /meli\.la\/|meli\.com\.br\/|mercadolivre\.com\.br\/[a-z0-9-]+\/p\//i.test(input) || /\/social\//i.test(input);
 }
 
+/**
+ * Um link de afiliado do ML só atribui a venda ao vínculo quando traz
+ * o identificador do afiliado (matt_word) ou da ferramenta (matt_tool).
+ * Links sem esses parâmetros NÃO geram comissão.
+ */
+export function hasAffiliateTracking(url?: string | null): boolean {
+  if (!url) return false;
+  return /(^|[?&])matt_word=[^&]+/.test(url) || /(^|[?&])matt_tool=[^&]+/.test(url);
+}
+
 /** Segue o redirect do link curto (ex: meli.la/xxxx) e devolve a URL final. */
 export async function resolveShortLink(shortUrl: string): Promise<string> {
   const res = await fetch(shortUrl, {
@@ -150,11 +160,20 @@ export async function scrapeMLProducts(url: string): Promise<ScrapedMLProduct[]>
   if (!res.ok) throw new Error(`Falha ao acessar página do ML: HTTP ${res.status}`);
 
   const html = await res.text();
+  const effectiveUrl = res.url || url;
   const cards = extractPolycards(html);
   const products: ScrapedMLProduct[] = [];
   for (const card of cards) {
     const p = parsePolycard(card);
-    if (p) products.push(p);
+    if (p) {
+      // Na vitrine social, o link de afiliado é o próprio link da página
+      // (matt_word, matt_tool, forceInApp, ref) — é ele que garante a
+      // comissão, não o permalink do produto com só os matt_* do card.
+      if (/\/social\//.test(effectiveUrl)) {
+        p.affiliateUrl = effectiveUrl;
+      }
+      products.push(p);
+    }
   }
   return products;
 }

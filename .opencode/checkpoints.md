@@ -5,6 +5,21 @@ Consulte no início de cada interação para saber onde parou.
 
 ---
 
+## Sessão 2026-08-30 — Garantia de vínculo: nada entra na loja sem comissão
+
+- `hasAffiliateTracking(url)` em `ml-scrape.ts`: verdadeiro se o link tem `matt_word` ou `matt_tool`.
+- `POST /api/ml/links` agora **recusa** item sem vínculo (fluxo 1 e fluxo 2) com mensagem clara + dica de usar o meli.la da vitrine — impede venda "perdida" silenciosamente.
+- Admin ganhou aviso verde: "toda venda feita por esses links é atribuída a você".
+- Gerador antigo `generateAffiliateLink` (sem ML_AFFILIATE_ID) não produz tracking → bloqueado pelo fluxo 2.
+- Testes unitários da regra (5/5) + build OK.
+
+## Sessão 2026-08-30 — Link de afiliado = link da vitrine social (comissão)
+
+- Usuário reportou: o link salvo era o permalink do produto com só `matt_event_ts`/`matt_d2id`/`matt_tracing_id`; o link que garante a comissão é o da página social (`/social/{nickname}?matt_word=...&matt_tool=...&forceInApp=true&ref=...`).
+- Fix em `src/lib/ml-scrape.ts` (`scrapeMLProducts`): quando a URL efetiva da página contém `/social/`, o `affiliateUrl` de TODOS os produtos passa a ser o link completo da vitrine (`res.url`).
+- Testado local: `meli.la/1PAVx9r` → vitrine de 21 produtos, cada um com `affiliateUrl` = link da vitrine ✓. Build OK.
+- Aviso: itens adicionados ANTES desse fix mantêm o link antigo — readicionar os produtos recria com o link correto.
+
 ## Sessão 2026-08-30 — Loja só com ofertas do admin (sem mocks, sem marca)
 
 - `/products` reescrito: só `MLStoreSection` (sem mock-data/filtros) — seção com empty state "Em breve, novidades por aqui".
