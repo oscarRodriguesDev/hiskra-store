@@ -42,7 +42,7 @@ export interface MLSearchResponse {
 }
 
 // Configuração
-const ML_BASE_URL = 'https://api.mercadolivre.com';
+const ML_BASE_URL = 'https://api.mercadolibre.com';
 const ML_SITE_ID = 'MLB'; // Brasil
 
 // Categorias principais de informática/eletrônicos

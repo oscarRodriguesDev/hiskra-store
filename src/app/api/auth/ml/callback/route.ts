@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const ML_BASE_URL = 'https://api.mercadolivre.com';
+const ML_BASE_URL = 'https://api.mercadolibre.com';
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
