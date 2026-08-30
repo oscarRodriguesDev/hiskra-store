@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
 
 const ML_BASE_URL = 'https://api.mercadolibre.com';
 
@@ -23,12 +24,23 @@ export async function GET(request: NextRequest) {
 
   const clientId = process.env.ML_CLIENT_ID;
   const clientSecret = process.env.ML_CLIENT_SECRET;
-  const redirectUri = 'https://store.hiskra.com.br/api/auth/ml/callback'
+  const redirectUri = 'https://store.hiskra.com.br/api/auth/ml/callback';
 
   if (!clientId || !clientSecret) {
     console.error('ML credentials not configured');
     return NextResponse.redirect(
       new URL('/?ml_error=missing_credentials', request.url)
+    );
+  }
+
+  // Obter code_verifier do cookie PKCE
+  const cookieStore = await cookies();
+  const codeVerifier = cookieStore.get('ml_code_verifier')?.value;
+
+  if (!codeVerifier) {
+    console.error('ML PKCE error: code_verifier missing');
+    return NextResponse.redirect(
+      new URL('/?ml_error=pkce_verifier_missing', request.url)
     );
   }
 
@@ -45,6 +57,7 @@ export async function GET(request: NextRequest) {
         client_secret: clientSecret,
         code,
         redirect_uri: redirectUri,
+        code_verifier: codeVerifier,
       }),
     });
 
@@ -58,24 +71,21 @@ export async function GET(request: NextRequest) {
 
     const tokens = await tokenResponse.json();
 
-    // Em produção, salve o refresh_token no banco/env de forma segura
-    // Por enquanto, mostra na tela para você copiar para .env
-    const refreshToken = tokens.refresh_token;
-    const accessToken = tokens.access_token;
-    const expiresIn = tokens.expires_in;
+    // Limpar cookie do code_verifier
+    const successUrl = new URL('/?ml_success=1', request.url);
+    successUrl.searchParams.set('refresh_token', tokens.refresh_token);
+    successUrl.searchParams.set('expires_in', String(tokens.expires_in));
+
+    const response = NextResponse.redirect(successUrl);
+    response.cookies.delete('ml_code_verifier');
 
     console.log('ML Tokens obtained:', {
-      access_token: accessToken?.substring(0, 20) + '...',
-      refresh_token: refreshToken?.substring(0, 20) + '...',
-      expires_in: expiresIn,
+      access_token: tokens.access_token?.substring(0, 20) + '...',
+      refresh_token: tokens.refresh_token?.substring(0, 20) + '...',
+      expires_in: tokens.expires_in,
     });
 
-    // Redireciona para página com tokens na URL (apenas para dev - copiar manualmente)
-    const successUrl = new URL('/?ml_success=1', request.url);
-    successUrl.searchParams.set('refresh_token', refreshToken);
-    successUrl.searchParams.set('expires_in', String(expiresIn));
-
-    return NextResponse.redirect(successUrl);
+    return response;
   } catch (err) {
     console.error('ML callback error:', err);
     return NextResponse.redirect(
