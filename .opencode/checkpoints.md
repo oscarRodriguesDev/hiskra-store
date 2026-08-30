@@ -5,6 +5,15 @@ Consulte no início de cada interação para saber onde parou.
 
 ---
 
+## Sessão 2026-08-30 — Loja só com ofertas do admin (sem mocks, sem marca)
+
+- `/products` reescrito: só `MLStoreSection` (sem mock-data/filtros) — seção com empty state "Em breve, novidades por aqui".
+- Home: removidos destaques mock e chips de categorias; CTA "Ver ofertas" → `/products`; seção neutra de ofertas selecionadas.
+- `/product/[slug]`: sempre 404 (modelo de afiliado não tem página interna de produto).
+- Textos neutros: card "Oferta", botão "Ver oferta", aria-label sem marca; descrições (`mercadolivre.ts`) e mensagens de erro das APIs sem "Mercado Livre".
+- `mock-data`, `ProductCard`, `ProductDetailClient` ficaram órfãos (mantidos; não são mais renderizados).
+- Build OK. Pendências: redeploy Vercel após Prisma; propagar `matt_word`/`matt_tool`.
+
 ## Sessão 2026-08-30 — Storage migrado para Prisma + Turso
 
 - Usuário pediu **Prisma**. Instalados `prisma`, `@prisma/client`, `@prisma/adapter-libsql` **7.10.0** (a tag `latest` do CLI apontava p/ rc 8.0.0 — alinhado tudo em 7.10.0).

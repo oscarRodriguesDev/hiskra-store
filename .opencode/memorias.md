@@ -6,6 +6,7 @@ Registro de decisões e alterações do projeto.
 
 | Data | Decisão | Autor |
 |------|---------|-------|
+| 2026-08-30 | Loja limpa de mocks e de marca: `/products` e home agora mostram **somente** ofertas adicionadas pelo admin; removidos produtos/categorias mock (`mock-data` não é mais usado nas páginas); `/product/[slug]` desativado (404 — ofertas abrem direto no anúncio externo); textos da UI neutros (sem "Mercado Livre") em cards, botões, descrições e mensagens de erro | VIBECODE |
 | 2026-08-30 | Storage migrado para **Prisma ORM 7.10.0** + driver adapter `@prisma/adapter-libsql` (Turso). Env vars usadas: `DATABASE_URL` (libsql://...) e `TOKEN_SECRET` (token JWT do Turso) — aceita também `TURSO_DATABASE_URL`/`TURSO_AUTH_TOKEN`. Client singleton em `src/lib/prisma.ts` | VIBECODE |
 | 2026-08-30 | Prisma 7 mudanças: `url` no datasource do schema foi removido (fica no `prisma.config.ts`); todo `PrismaClient` exige adapter; delegate do model usa camelCase do model (`StoreItem` → `prisma.storeItem`). CLI `db push` NÃO conecta em `libsql://` → aplicar schema no Turso via `npm run db:apply` (`scripts/apply-schema.mjs`: `prisma migrate diff` + pipeline HTTP idempotente) | VIBECODE |
 | 2026-08-30 | Model `StoreItem` (tabela `ml_store`) em `prisma/schema.prisma`; `ml-store.ts` reescrito com upsert/findMany/update/delete via Prisma (meshmo contrato `MLStoredItem`). `postinstall` roda `prisma generate` (client pronto na Vercel) | VIBECODE |

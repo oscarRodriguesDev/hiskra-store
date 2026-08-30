@@ -112,7 +112,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('[api/ml/links POST]', error);
     return NextResponse.json(
-      { error: 'Falha ao buscar o produto no Mercado Livre.', detail: error instanceof Error ? error.message : 'Erro' },
+      { error: 'Falha ao buscar o produto.', detail: error instanceof Error ? error.message : 'Erro' },
       { status: 502 }
     );
   }

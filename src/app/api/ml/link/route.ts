@@ -65,7 +65,7 @@ export async function GET(request: NextRequest) {
       console.error('[api/ml/link scrape]', error);
       return NextResponse.json(
         {
-          error: 'Falha ao acessar a página do Mercado Livre.',
+          error: 'Falha ao acessar a página do anúncio.',
           detail: error instanceof Error ? error.message : 'Erro',
         },
         { status: 502 }
@@ -116,7 +116,7 @@ export async function GET(request: NextRequest) {
     console.error('[api/ml/link api]', error);
     return NextResponse.json(
       {
-        error: 'Falha ao buscar o produto no Mercado Livre.',
+        error: 'Falha ao buscar o produto.',
         detail: error instanceof Error ? error.message : 'Erro',
         dica: 'Se for um link de afiliado (meli.la/...), o ID novo ainda não é aceito pela API — prefira o link curto.',
       },

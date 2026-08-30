@@ -126,7 +126,7 @@ export default function AdminLinksPage() {
   }
 
   const formatPrice = (v: number | null | undefined, currency: string) => {
-    if (v === null || v === undefined) return 'Preço no ML';
+    if (v === null || v === undefined) return 'A consultar';
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
       currency: currency === 'USD' ? 'USD' : 'BRL',
@@ -239,7 +239,7 @@ export default function AdminLinksPage() {
                   </div>
                   <div className="flex-1 min-w-0 flex flex-col">
                     <p className="text-xs font-medium text-gray-500">
-                      {p.itemId || p.productId || p.userProductId || 'Mercado Livre'}
+                      {p.itemId || p.productId || p.userProductId || 'Anúncio'}
                     </p>
                     <h3 className="mt-1 text-sm font-semibold text-gray-900 line-clamp-2">{p.title}</h3>
                     <div className="mt-auto flex items-end justify-between gap-2 pt-2">

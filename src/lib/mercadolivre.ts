@@ -304,7 +304,7 @@ export function convertMLToProduct(mlProduct: MLProduct, affiliateTrackingId?: s
     id: `ml-${mlProduct.id}`,
     slug: `ml-${mlProduct.id}`,
     name: mlProduct.title,
-    description: `Produto vendido e entregue por ${mlProduct.seller_address.nickname} no Mercado Livre.\n\n${JSON.stringify(specs, null, 2)}`,
+    description: `Produto vendido e entregue por ${mlProduct.seller_address.nickname}.\n\n${JSON.stringify(specs, null, 2)}`,
     shortDescription: shortDesc || mlProduct.title.substring(0, 160),
     price: Math.round(mlProduct.price * 100), // converter para centavos
     compareAtPrice: mlProduct.original_price ? Math.round(mlProduct.original_price * 100) : undefined,
@@ -382,7 +382,7 @@ export function convertMLCatalogToProduct(
     id: `ml-cat-${catalogProduct.id}`,
     slug: `ml-cat-${catalogProduct.id.toLowerCase()}`,
     name: catalogProduct.name,
-    description: `Produto do catálogo do Mercado Livre.\n\n${JSON.stringify(specs, null, 2)}`,
+    description: `Produto do catálogo.\n\n${JSON.stringify(specs, null, 2)}`,
     shortDescription: shortDesc || catalogProduct.name.substring(0, 160),
     price: 0, // catálogo não retorna preço; buscar item/permalink separadamente
     images,

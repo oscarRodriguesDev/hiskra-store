@@ -5,8 +5,6 @@ import { getStorefrontItems } from '@/lib/ml-store';
 export async function MLStoreSection() {
   const items = await getStorefrontItems();
 
-  if (items.length === 0) return null;
-
   const formatPrice = (v: number | null, currency: string) => {
     if (v === null || v === undefined) return 'Ver preço';
     return new Intl.NumberFormat('pt-BR', {
@@ -19,12 +17,24 @@ export async function MLStoreSection() {
     <section className="mt-12">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Ofertas do Mercado Livre</h2>
+          <h2 className="text-2xl font-bold text-gray-900">Ofertas</h2>
           <p className="mt-1 text-sm text-gray-600">
-            Produtos selecionados com preços competitivos.
+            Produtos selecionados com bons preços.
           </p>
         </div>
       </div>
+
+      {items.length === 0 ? (
+        <div className="bg-white rounded-xl border border-gray-100 p-12 text-center shadow-sm">
+          <svg className="mx-auto w-12 h-12 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 3v18m9-9H3" />
+          </svg>
+          <h3 className="mt-4 text-lg font-medium text-gray-900">Em breve, novidades por aqui</h3>
+          <p className="mt-2 text-sm text-gray-600">
+            Nossos produtos selecionados aparecerão nesta página.
+          </p>
+        </div>
+      ) : (
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {items.map((item) => (
@@ -37,7 +47,7 @@ export async function MLStoreSection() {
               target="_blank"
               rel="noopener noreferrer sponsored"
               className="relative aspect-square overflow-hidden bg-gray-50"
-              aria-label={`Ver ${item.title} no Mercado Livre`}
+              aria-label={`Ver ${item.title}`}
             >
               {item.image && (
                 <Image
@@ -59,7 +69,7 @@ export async function MLStoreSection() {
                 className="flex-1 min-w-0"
               >
                 <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
-                  Mercado Livre
+                  Oferta
                 </p>
                 <h3 className="mt-1 text-base font-semibold text-gray-900 line-clamp-2 group-hover:text-black transition-colors">
                   {item.title}
@@ -78,15 +88,16 @@ export async function MLStoreSection() {
                 rel="noopener noreferrer sponsored"
                 className="mt-3 w-full inline-flex items-center justify-center px-4 py-2 rounded-lg bg-gray-900 text-white text-sm font-medium hover:bg-gray-800 transition-colors"
               >
-                Comprar no Mercado Livre
+                Ver oferta
               </a>
             </div>
           </article>
         ))}
       </div>
+      )}
 
       <p className="mt-6 text-xs text-gray-400">
-        <Link href="/products" className="hover:text-gray-600">Ofertas disponíveis enquanto durar o estoque dos vendedores.</Link> Ao comprar pelos links acima, a Hiskra pode receber uma comissão.
+        <Link href="/products" className="hover:text-gray-600">Os preços e a disponibilidade podem variar.</Link> Ao comprar pelos links acima, a Hiskra pode receber uma comissão.
       </p>
     </section>
   );

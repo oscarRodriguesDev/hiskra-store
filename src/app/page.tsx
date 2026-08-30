@@ -1,11 +1,6 @@
 import Link from 'next/link';
-import { getFeaturedProducts, categories } from '@/lib/mock-data';
-import { ProductCard } from '@/components/ProductCard';
-import { formatPrice } from '@/lib/types';
 
 export default function HomePage() {
-  const featuredProducts = getFeaturedProducts();
-
   return (
     <div className="flex flex-col">
       {/* Hero Section */}
@@ -24,13 +19,7 @@ export default function HomePage() {
                 href="/products"
                 className="inline-flex items-center justify-center px-6 py-3 text-base font-semibold text-gray-900 bg-white rounded-lg hover:bg-gray-100 transition-colors"
               >
-                Ver produtos
-              </Link>
-              <Link
-                href="/products?category=Placas%20de%20V%C3%ADdeo"
-                className="inline-flex items-center justify-center px-6 py-3 text-base font-semibold text-white bg-transparent border-2 border-white rounded-lg hover:bg-white/10 transition-colors"
-              >
-                Placas de Vídeo
+                Ver ofertas
               </Link>
             </div>
           </div>
@@ -43,43 +32,20 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Categories */}
-      <section className="py-16 bg-white">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-wrap gap-2 justify-center">
-            {categories.map((category) => (
-              <Link
-                key={category}
-                href={category === 'Todos' ? '/products' : `/products?category=${encodeURIComponent(category)}`}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors"
-              >
-                {category}
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Featured Products */}
+      {/* Ofertas */}
       <section className="py-16 bg-gray-50">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between mb-8">
-            <h2 className="text-2xl md:text-3xl font-bold text-gray-900">Destaques</h2>
+          <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-8 text-center">Ofertas selecionadas</h2>
+          <p className="text-gray-600 max-w-2xl mx-auto text-center mb-8">
+            Confira nossa seleção de produtos com bons preços.
+          </p>
+          <div className="text-center">
             <Link
               href="/products"
-              className="text-sm font-medium text-gray-700 hover:text-gray-900 flex items-center gap-1"
+              className="inline-flex items-center justify-center px-6 py-3 text-base font-semibold text-white bg-gray-900 rounded-lg hover:bg-gray-800 transition-colors"
             >
-              Ver todos
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
+              Ver ofertas
             </Link>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {featuredProducts.slice(0, 4).map((product, index) => (
-              <ProductCard key={product.id} product={product} priority={index < 4} />
-            ))}
           </div>
         </div>
       </section>

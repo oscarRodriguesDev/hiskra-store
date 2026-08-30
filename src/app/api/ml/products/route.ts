@@ -100,7 +100,7 @@ export async function GET(request: NextRequest) {
       error instanceof Error ? error.message : 'Erro desconhecido';
     console.error('[api/ml/products]', error);
     return NextResponse.json(
-      { error: 'Falha ao buscar produtos do Mercado Livre', detail: message },
+      { error: 'Falha ao buscar produtos', detail: message },
       { status: 502 }
     );
   }
