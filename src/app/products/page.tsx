@@ -1,6 +1,10 @@
 import { Metadata } from 'next';
 import { MLStoreSection } from '@/components/MLStoreSection';
 
+// Página lê a vitrine (Turso) a cada request — nunca cachear o HTML, senão
+// produtos adicionados/removidos no admin demoram (ou nunca) para aparecer.
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: 'Ofertas | Hiskra Store',
   description: 'Ofertas selecionadas de componentes de PC, periféricos e hardware gamer.',
