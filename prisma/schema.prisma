@@ -1,0 +1,25 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// Itens do Mercado Livre salvos pelo admin para exibir na loja.
+model StoreItem {
+  itemId         String   @id @map("item_id")
+  title          String
+  price          Float?   @map("price")
+  originalPrice  Float?   @map("original_price")
+  currencyId     String   @default("BRL") @map("currency_id")
+  image          String   @default("") @map("image")
+  permalink      String
+  affiliateLink  String   @default("") @map("affiliate_link")
+  showInStore    Boolean  @default(true) @map("show_in_store")
+  createdAt      DateTime @default(now()) @map("created_at")
+  sellerNickname String?  @map("seller_nickname")
+  categoryId     String?  @map("category_id")
+
+  @@map("ml_store")
+}

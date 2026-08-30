@@ -5,6 +5,18 @@ Consulte no início de cada interação para saber onde parou.
 
 ---
 
+## Sessão 2026-08-30 — Storage migrado para Prisma + Turso
+
+- Usuário pediu **Prisma**. Instalados `prisma`, `@prisma/client`, `@prisma/adapter-libsql` **7.10.0** (a tag `latest` do CLI apontava p/ rc 8.0.0 — alinhado tudo em 7.10.0).
+- Env vars do banco no `.env`/Vercel: `DATABASE_URL=libsql://...` + `TOKEN_SECRET` (JWT do Turso). `src/lib/prisma.ts` aceita também `TURSO_DATABASE_URL`/`TURSO_AUTH_TOKEN`.
+- `prisma/schema.prisma`: model `StoreItem` → tabela `ml_store` (item_id PK, title, price, original_price, currency_id, image, permalink, affiliate_link, show_in_store, created_at, seller_nickname, category_id). **Tabela criada no Turso** (via `migrate diff` + pipeline HTTP).
+- `ml-store.ts` reescrito: mesma API (`getStoredItems`, `getStorefrontItems`, `addStoredItem` = upsert que preserva toggle, `updateStoredItem`, `removeStoredItem`) via `prisma.storeItem` — no Prisma 7 o delegate é o camelCase do model (não `mlStoreItem`).
+- Peculiaridades do Prisma 7: `url` do datasource saiu do schema (fica no `prisma.config.ts`); `PrismaClient` sem adapter lança erro; CLI `db push` não aceita scheme `libsql://` (cria `prisma/dev.db` local) → schema no Turso via **`npm run db:apply`** (script idempotente; testado ✓).
+- `package.json`: `postinstall: prisma generate` (client na Vercel), `db:push` (dev local), `db:apply` (Turso). `.gitignore`: `prisma/dev.db*`, `/data/`.
+- Teste ponta a ponta no Turso remoto: count/create/findUnique/update/delete ✓. Build OK ✓.
+- ⚠️ Pendência: **Redeploy na Vercel** com as env `DATABASE_URL` + `TOKEN_SECRET` (mesmo erro ENOENT de antes era deploy antigo); confirmar que os nomes batem na Vercel e testar POST /api/ml/links.
+- Pendência antiga mantida: propagar `matt_word`/`matt_tool` no `affiliateUrl` (comissão).
+
 ## Sessão 2026-08-30 — Scraping da vitrine do afiliado (sem credenciais)
 
 - Descobertas: links de afiliado = `meli.la/XXX` → resolve para `/social/{nickname}`; IDs novos (`KY2Y2F-5W1X`, `MLBU...`) NÃO são aceitos pela API (404); página `/p/{id}` individual é bootstrap JS sem dados; a página social embute polycards com tudo (título, preço, imagem, permalink, params `matt_*`).

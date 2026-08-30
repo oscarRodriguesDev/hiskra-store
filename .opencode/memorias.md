@@ -6,6 +6,9 @@ Registro de decisões e alterações do projeto.
 
 | Data | Decisão | Autor |
 |------|---------|-------|
+| 2026-08-30 | Storage migrado para **Prisma ORM 7.10.0** + driver adapter `@prisma/adapter-libsql` (Turso). Env vars usadas: `DATABASE_URL` (libsql://...) e `TOKEN_SECRET` (token JWT do Turso) — aceita também `TURSO_DATABASE_URL`/`TURSO_AUTH_TOKEN`. Client singleton em `src/lib/prisma.ts` | VIBECODE |
+| 2026-08-30 | Prisma 7 mudanças: `url` no datasource do schema foi removido (fica no `prisma.config.ts`); todo `PrismaClient` exige adapter; delegate do model usa camelCase do model (`StoreItem` → `prisma.storeItem`). CLI `db push` NÃO conecta em `libsql://` → aplicar schema no Turso via `npm run db:apply` (`scripts/apply-schema.mjs`: `prisma migrate diff` + pipeline HTTP idempotente) | VIBECODE |
+| 2026-08-30 | Model `StoreItem` (tabela `ml_store`) em `prisma/schema.prisma`; `ml-store.ts` reescrito com upsert/findMany/update/delete via Prisma (meshmo contrato `MLStoredItem`). `postinstall` roda `prisma generate` (client pronto na Vercel) | VIBECODE |
 | 2026-08-30 | Links de afiliado do usuário vêm como `meli.la/...` (resolve para `/social/{nickname}`) e IDs no formato novo (`KY2Y2F-5W1X`, `user_product_id` `MLBU...`) que a API REST NÃO aceita (404). Solução: scraping da página pública social via polycards (`src/lib/ml-scrape.ts`) — SEM credenciais | VIBECODE |
 | 2026-08-30 | `GET /api/ml/link`: link de afiliado/`/social/` → scraping público (retorna `type:"list"` com produtos); ID `MLB...` antigo → API com token (retorna `type:"single"`) | VIBECODE |
 | 2026-08-30 | `POST /api/ml/links` aceita `{ item }` (dados prontos do scraping) ou `{ url }` (via API); admin mostra lista da vitrine com botão "Adicionar" individual | VIBECODE |
