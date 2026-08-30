@@ -41,9 +41,51 @@ export interface MLSearchResponse {
   available_filters: unknown[];
 }
 
+// Produto do CATÁLOGO do ML (endpoint /products/search — substitui o /sites/{site}/search descontinuado)
+export interface MLCatalogProduct {
+  id: string;
+  status: string;
+  domain_id: string;
+  settings?: { listing_strategy?: string };
+  name: string;
+  main_features?: unknown[];
+  attributes: Array<{
+    id: string;
+    name: string;
+    value_id: string | null;
+    value_name: string | null;
+  }>;
+  pictures: Array<{ id: string; url: string }>;
+  parent_id?: string;
+  children_ids?: string[];
+}
+
+export interface MLCatalogResponse {
+  keywords?: string;
+  domain_id?: string;
+  paging: { total: number; limit: number; offset: number };
+  results: MLCatalogProduct[];
+}
+
 // Configuração
 const ML_BASE_URL = 'https://api.mercadolibre.com';
 const ML_SITE_ID = 'MLB'; // Brasil
+
+// Termos de busca no catálogo (substituem a busca por categoria descontinuada)
+export const CATEGORY_SEARCH_TERMS: Record<keyof typeof ML_CATEGORIES, string> = {
+  processors: 'processador',
+  videoCards: 'placa de vídeo',
+  memory: 'memória ram',
+  storage: 'ssd',
+  motherboards: 'placa mãe',
+  powerSupplies: 'fonte atx',
+  cases: 'gabinete gamer',
+  cooling: 'water cooler',
+  keyboards: 'teclado mecânico',
+  mice: 'mouse gamer',
+  monitors: 'monitor',
+  headsets: 'headset gamer',
+};
 
 // Categorias principais de informática/eletrônicos
 export const ML_CATEGORIES = {
@@ -145,6 +187,28 @@ async function mlFetch<T>(endpoint: string, options: RequestInit = {}): Promise<
   return response.json();
 }
 
+// Buscar produtos no catálogo (substitui o /sites/{site}/search descontinuado)
+export async function searchMLCatalog(
+  options: {
+    q?: string;
+    domainId?: string;
+    limit?: number;
+    offset?: number;
+  } = {}
+): Promise<MLCatalogResponse> {
+  const params = new URLSearchParams({
+    status: 'active',
+    site_id: ML_SITE_ID,
+    limit: String(options.limit || 20),
+    offset: String(options.offset || 0),
+  });
+
+  if (options.q) params.set('q', options.q);
+  if (options.domainId) params.set('domain_id', options.domainId);
+
+  return mlFetch<MLCatalogResponse>(`/products/search?${params}`);
+}
+
 // Buscar produtos por categoria
 export async function searchMLProducts(
   categoryId: string,
@@ -175,6 +239,25 @@ export async function searchMLProducts(
 // Buscar detalhes de um produto
 export async function getMLProduct(itemId: string): Promise<MLProduct> {
   return mlFetch<MLProduct>(`/items/${itemId}`);
+}
+
+// Extrair o ID do item a partir da URL do anúncio ou do próprio ID
+export function extractMLItemId(input: string): string | null {
+  const trimmed = input.trim();
+
+  // Já é um ID direto (ex: MLB1234567890)
+  if (/^ML[BACDEHMOUV]{2}\d{6,}$/.test(trimmed)) {
+    return trimmed;
+  }
+
+  // URL de anúncio (ex: https://www.mercadolivre.com.br/MLB-1234567890-nome-...)
+  // ou produto.mercadolivre.com.br/MLB-1234567890-...
+  const matches = trimmed.match(/(ML[BACDEHMOUV]{2})-(\d{6,})/);
+  if (matches) {
+    return `${matches[1]}${matches[2]}`;
+  }
+
+  return null;
 }
 
 // Gerar link de afiliado (precisa do seu tracking ID)
@@ -264,6 +347,50 @@ function extractTags(product: MLProduct): string[] {
     }
   }
   return tags;
+}
+
+// Converter produto do catálogo para o formato interno (sem preço — catálogo não traz preço)
+export function convertMLCatalogToProduct(
+  catalogProduct: MLCatalogProduct,
+  categoryKey?: keyof typeof ML_CATEGORIES
+): Product {
+  const images =
+    catalogProduct.pictures.length > 0
+      ? catalogProduct.pictures.map(p => p.url)
+      : [];
+
+  // Extrair specs principais
+  const specs: Record<string, string> = {};
+  for (const attr of catalogProduct.attributes) {
+    if (attr.value_name && !attr.id.startsWith('SELLER_')) {
+      specs[attr.name] = attr.value_name;
+    }
+  }
+
+  const shortDesc = [
+    specs['Marca'] || '',
+    specs['Modelo'] || '',
+    specs['Linha'] || '',
+  ].filter(Boolean).join(' • ');
+
+  return {
+    id: `ml-cat-${catalogProduct.id}`,
+    slug: `ml-cat-${catalogProduct.id.toLowerCase()}`,
+    name: catalogProduct.name,
+    description: `Produto do catálogo do Mercado Livre.\n\n${JSON.stringify(specs, null, 2)}`,
+    shortDescription: shortDesc || catalogProduct.name.substring(0, 160),
+    price: 0, // catálogo não retorna preço; buscar item/permalink separadamente
+    images,
+    category: categoryKey
+      ? getCategoryName(ML_CATEGORIES[categoryKey] || '')
+      : catalogProduct.domain_id || 'Eletrônicos',
+    stock: 0,
+    isActive: catalogProduct.status === 'active',
+    featured: false,
+    tags: ['Catálogo ML'],
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
 }
 
 // Sincronizar produtos de uma categoria

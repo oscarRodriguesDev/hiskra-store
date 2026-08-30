@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import {
   ML_CATEGORIES,
-  searchMLProducts,
-  convertMLToProduct,
-  generateAffiliateLink,
+  CATEGORY_SEARCH_TERMS,
+  searchMLCatalog,
+  convertMLCatalogToProduct,
 } from '@/lib/mercadolivre';
 import type { Product } from '@/lib/types';
 
@@ -11,54 +11,42 @@ export const dynamic = 'force-dynamic';
 
 export const maxDuration = 60;
 
-interface AffiliateProduct extends Product {
-  mlItemId: string;
-  permalink: string;
-  affiliateLink: string;
-  soldQuantity: number;
-  freeShipping: boolean;
-  installments?: { quantity: number; amount: number };
+interface CatalogProduct extends Product {
+  catalogProductId: string;
+  domainId: string;
+  mlPrice?: number | null;
+  note?: string;
 }
 
 /**
  * GET /api/ml/products
  *
- * Lista produtos afiliáveis do Mercado Livre (categorias de tecnologia/PC).
+ * Busca produtos no CATÁLOGO do Mercado Livre (endpoint /products/search,
+ * que substituiu o /sites/{site}/search descontinuado em 2025).
+ *
+ * ⚠️ ATENÇÃO: o catálogo NÃO retorna preço nem link de venda individual.
+ * Para produto com preço/permalink real, use /api/ml/link?url=<link do anúncio>.
  *
  * Query params:
  *  - category     chave da categoria (ex: processors, videoCards). Padrão: todas.
- *  - limit        produtos por categoria (padrão 50, máx 100)
+ *  - limit        produtos por categoria (padrão 20, máx 50)
  *  - offset       deslocamento por categoria (padrão 0)
- *  - affiliate    "false" desativa link de afiliado (padrão true)
- *  - minPrice     preço mínimo em reais (opcional)
- *  - maxPrice     preço máximo em reais (opcional)
  */
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
 
   const categoryKey = searchParams.get('category');
   const limit = Math.min(
-    Math.max(Number(searchParams.get('limit')) || 50, 1),
-    100
+    Math.max(Number(searchParams.get('limit')) || 20, 1),
+    50
   );
   const offset = Math.max(Number(searchParams.get('offset')) || 0, 0);
-  const useAffiliate = searchParams.get('affiliate') !== 'false';
-  const minPrice = searchParams.get('minPrice')
-    ? Number(searchParams.get('minPrice'))
-    : undefined;
-  const maxPrice = searchParams.get('maxPrice')
-    ? Number(searchParams.get('maxPrice'))
-    : undefined;
 
-  const categoryEntries = Object.entries(ML_CATEGORIES) as Array<
-    [keyof typeof ML_CATEGORIES, string]
-  >;
+  const categoryKeys = (
+    categoryKey ? [categoryKey] : Object.keys(CATEGORY_SEARCH_TERMS)
+  ) as Array<keyof typeof ML_CATEGORIES>;
 
-  const categoriesToFetch = categoryKey
-    ? categoryEntries.filter(([key]) => key === categoryKey)
-    : categoryEntries;
-
-  if (categoriesToFetch.length === 0) {
+  if (categoryKeys.some(key => !(key in ML_CATEGORIES))) {
     return NextResponse.json(
       {
         error: `Categoria inválida. Use uma destas: ${Object.keys(ML_CATEGORIES).join(', ')}`,
@@ -68,59 +56,39 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // Busca as categorias em lotes de 4 para respeitar o rate limit do ML (~10 req/s)
-    const products: AffiliateProduct[] = [];
+    const products: CatalogProduct[] = [];
     const categoryTotals: Record<string, number> = {};
 
-    const fetchCategory = async ([key, categoryId]: [
-      keyof typeof ML_CATEGORIES,
-      string
-    ]) => {
-      const response = await searchMLProducts(categoryId, {
+    const fetchCategory = async (key: keyof typeof ML_CATEGORIES) => {
+      const response = await searchMLCatalog({
+        q: CATEGORY_SEARCH_TERMS[key],
         limit,
         offset,
-        condition: 'new',
-        sort: 'sold_quantity_desc',
-        minPrice,
-        maxPrice,
       });
 
       categoryTotals[key] = response.paging?.total ?? response.results.length;
 
-      for (const mlProduct of response.results) {
-        const baseProduct = convertMLToProduct(mlProduct);
-        const permalink = mlProduct.permalink;
-
+      for (const catalogProduct of response.results) {
         products.push({
-          ...baseProduct,
-          mlItemId: mlProduct.id,
-          permalink,
-          affiliateLink: useAffiliate
-            ? generateAffiliateLink(permalink)
-            : permalink,
-          soldQuantity: mlProduct.sold_quantity,
-          freeShipping: mlProduct.shipping?.free_shipping ?? false,
-          installments: mlProduct.installments?.quantity
-            ? {
-                quantity: mlProduct.installments.quantity,
-                amount: mlProduct.installments.amount,
-              }
-            : undefined,
+          ...convertMLCatalogToProduct(catalogProduct, key),
+          catalogProductId: catalogProduct.id,
+          domainId: catalogProduct.domain_id,
+          // Catálogo não tem preço — precisa de /api/ml/link para o anúncio real
+          mlPrice: null,
+          note: 'Use /api/ml/link?url=... para obter preço e link de venda reais',
         });
       }
     };
 
     // Pool de concorrência: 4 categorias por vez
-    for (let i = 0; i < categoriesToFetch.length; i += 4) {
-      const batch = categoriesToFetch.slice(i, i + 4);
+    for (let i = 0; i < categoryKeys.length; i += 4) {
+      const batch = categoryKeys.slice(i, i + 4);
       await Promise.all(batch.map(fetchCategory));
     }
 
-    // Ordena por mais vendidos (global)
-    products.sort((a, b) => b.soldQuantity - a.soldQuantity);
-
     return NextResponse.json({
       site: 'MLB',
+      endpoint: '/products/search',
       category: categoryKey || 'all',
       total: products.length,
       categoryTotals,

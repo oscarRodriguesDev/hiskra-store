@@ -40,6 +40,8 @@ export async function GET(request: NextRequest) {
   authUrl.searchParams.set('redirect_uri', REDIRECT_URI);
   authUrl.searchParams.set('code_challenge', codeChallenge);
   authUrl.searchParams.set('code_challenge_method', 'S256');
+  // Scopes necessários: leitura de produtos + refresh de token
+  authUrl.searchParams.set('scope', 'read write offline_access');
 
   const response = NextResponse.redirect(authUrl.toString());
   response.cookies.set('ml_code_verifier', codeVerifier, {
