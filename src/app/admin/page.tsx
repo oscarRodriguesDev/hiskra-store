@@ -142,7 +142,19 @@ export default function AdminLinksPage() {
             <span>/</span>
             <span className="text-gray-900 font-medium">Painel de links</span>
           </nav>
-          <h1 className="text-3xl md:text-4xl font-bold text-gray-900">Painel de links</h1>
+          <div className="flex items-center justify-between gap-4">
+            <h1 className="text-3xl md:text-4xl font-bold text-gray-900">Painel de links</h1>
+            <button
+              onClick={() => {
+                fetch('/api/admin/logout', { method: 'POST' }).then(() => {
+                  window.location.href = '/login';
+                });
+              }}
+              className="shrink-0 px-4 py-2 rounded-lg border border-gray-300 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+            >
+              Sair
+            </button>
+          </div>
           <p className="mt-2 text-gray-600">
             Cole seu link de afiliado (ex: <span className="font-mono text-sm">https://meli.la/XXXXXX</span>) e o
             sistema busca os anúncios da sua vitrine — sem credenciais. Escolha quais mostrar na loja.

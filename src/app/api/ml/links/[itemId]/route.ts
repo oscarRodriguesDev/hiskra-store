@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { updateStoredItem, removeStoredItem } from '@/lib/ml-store';
+import { isAdminRequest } from '@/lib/admin-auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,6 +12,11 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ itemId: string }> }
 ) {
+  // Apenas o admin autenticado pode alterar itens
+  if (!(await isAdminRequest(request))) {
+    return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 });
+  }
+
   const { itemId } = await params;
   let body: { showInStore?: boolean };
   try {
@@ -31,9 +37,14 @@ export async function PATCH(
  * DELETE /api/ml/links/:itemId — remove o item da lista
  */
 export async function DELETE(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ itemId: string }> }
 ) {
+  // Apenas o admin autenticado pode remover itens
+  if (!(await isAdminRequest(request))) {
+    return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 });
+  }
+
   const { itemId } = await params;
   const removed = await removeStoredItem(itemId);
   if (!removed) {

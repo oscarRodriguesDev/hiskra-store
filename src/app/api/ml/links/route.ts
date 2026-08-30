@@ -7,6 +7,7 @@ import {
 } from '@/lib/mercadolivre';
 import type { ScrapedMLProduct } from '@/lib/ml-scrape';
 import { hasAffiliateTracking } from '@/lib/ml-scrape';
+import { isAdminRequest } from '@/lib/admin-auth';
 import { getStoredItems, addStoredItem } from '@/lib/ml-store';
 
 export const dynamic = 'force-dynamic';
@@ -41,6 +42,11 @@ export async function GET(request: NextRequest) {
  *   { "item": <ScrapedMLProduct> }  → salva direto dados vindos do scraping
  */
 export async function POST(request: NextRequest) {
+  // Apenas o admin autenticado pode adicionar produtos na loja
+  if (!(await isAdminRequest(request))) {
+    return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 });
+  }
+
   let body: { url?: string; item?: ScrapedMLProduct };
   try {
     body = await request.json();

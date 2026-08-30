@@ -5,6 +5,19 @@ Consulte no início de cada interação para saber onde parou.
 
 ---
 
+## Sessão 2026-08-30 — Admin protegido com login
+
+- Usuário pediu proteção do `/admin` (só ele publica produtos). Credenciais: `demo@hiskra.com` / `demo123`.
+- `src/lib/admin-auth.ts`: sessão em cookie httpOnly assinado HMAC-SHA256 (Web Crypto, sem libs) — `signSession`/`verifySession`/`isAdminRequest`/`getSessionToken`/`validateCredentials`/`cookieOptions`; envs `ADMIN_EMAIL`/`ADMIN_PASSWORD`/`ADMIN_SECRET` com fallback demo; expiração 7 dias.
+- `src/app/login/page.tsx`: formulário de acesso; `POST /api/admin/login` (valida + seta cookie) e `POST /api/admin/logout` (apaga).
+- `src/app/admin/layout.tsx`: server layout checa cookie e faz `redirect('/login')` — protege a página client existente.
+- `POST /api/ml/links` e `PATCH/DELETE /api/ml/links/:itemId`: exigem sessão (401 sem cookie). `GET` de `/api/ml/link` e `/api/ml/links` continuam públicos (loja + busca do admin).
+- Botão "Sair" no cabeçalho do admin.
+- `.env` local ganhou `ADMIN_EMAIL`/`ADMIN_PASSWORD`/`ADMIN_SECRET` (não versionado). Na Vercel os fallbacks demo valem; trocar via env se quiser.
+- Testes unitários de auth 7/7 (credenciais, sign/verify, token adulterado, expirado, extração de cookie, isAdmin, sem cookie) + build OK.
+
+---
+
 ## Sessão 2026-08-30 — Estado final: loja no ar, pronta para divulgar
 
 - **Deploy automático confirmado**: Vercel (GitHub) publica cada push no `main` — nada de redeploy manual. Verificado em produção:
