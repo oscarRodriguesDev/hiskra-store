@@ -58,6 +58,7 @@ export default function RootLayout({
                     <li><a href="/products" className="hover:text-gray-900">Produtos</a></li>
                     <li><a href="/cart" className="hover:text-gray-900">Carrinho</a></li>
                     <li><a href="/auth" className="hover:text-gray-900">Minha conta</a></li>
+                    <li><a href="/admin" className="hover:text-gray-900">Painel de links</a></li>
                   </ul>
                 </div>
                 <div>

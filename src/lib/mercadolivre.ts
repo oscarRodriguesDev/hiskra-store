@@ -260,6 +260,11 @@ export function extractMLItemId(input: string): string | null {
   return null;
 }
 
+// Link público de um produto do catálogo (PDP) — ex: /p/MLB16240160
+export function getCatalogPermalink(catalogProductId: string): string {
+  return `https://www.mercadolivre.com.br/p/${catalogProductId}`;
+}
+
 // Gerar link de afiliado (precisa do seu tracking ID)
 export function generateAffiliateLink(permalink: string, trackingId?: string): string {
   const affiliateId = trackingId || process.env.ML_AFFILIATE_ID;

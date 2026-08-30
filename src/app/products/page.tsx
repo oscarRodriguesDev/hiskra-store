@@ -1,6 +1,7 @@
 import { Metadata } from 'next';
 import { getProductsByCategory, categories, searchProducts } from '@/lib/mock-data';
 import { ProductCard } from '@/components/ProductCard';
+import { MLStoreSection } from '@/components/MLStoreSection';
 import { formatPrice } from '@/lib/types';
 
 interface ProductsPageProps {
@@ -128,6 +129,9 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
             )}
           </div>
         </div>
+
+        {/* Produtos do Mercado Livre (afiliados) */}
+        <MLStoreSection />
       </div>
     </div>
   );
