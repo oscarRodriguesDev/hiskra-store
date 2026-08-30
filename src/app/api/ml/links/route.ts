@@ -5,6 +5,7 @@ import {
   convertMLToProduct,
   generateAffiliateLink,
 } from '@/lib/mercadolivre';
+import type { ScrapedMLProduct } from '@/lib/ml-scrape';
 import { getStoredItems, addStoredItem } from '@/lib/ml-store';
 
 export const dynamic = 'force-dynamic';
@@ -34,18 +35,44 @@ export async function GET(request: NextRequest) {
 
 /**
  * POST /api/ml/links
- * { "url": "<link do anúncio>" }
- *
- * Busca o anúncio no Mercado Livre e salva na lista da loja.
+ * Aceita:
+ *   { "url": "<link do anúncio>" }  → busca via API (formato antigo MLB...)
+ *   { "item": <ScrapedMLProduct> }  → salva direto dados vindos do scraping
  */
 export async function POST(request: NextRequest) {
-  let body: { url?: string };
+  let body: { url?: string; item?: ScrapedMLProduct };
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: 'Corpo da requisição inválido. Envie JSON com { "url": "..." }.' }, { status: 400 });
+    return NextResponse.json(
+      { error: 'Corpo da requisição inválido. Envie JSON com { "url": "..." } ou { "item": {...} }.' },
+      { status: 400 }
+    );
   }
 
+  // ── Fluxo 1: dados prontos do scraping (sem credenciais) ──
+  if (body.item) {
+    const it = body.item;
+    if (!it.title || !it.permalink) {
+      return NextResponse.json({ error: 'Item incompleto para salvar.' }, { status: 400 });
+    }
+    const itemId = it.itemId || it.productId || it.userProductId || it.permalink;
+    const stored = await addStoredItem({
+      itemId,
+      title: it.title,
+      price: it.price,
+      originalPrice: it.originalPrice,
+      currencyId: it.currency,
+      image: it.imageUrl,
+      permalink: it.permalink,
+      affiliateLink: it.affiliateUrl || it.permalink,
+      sellerNickname: undefined,
+      categoryId: undefined,
+    });
+    return NextResponse.json({ item: stored });
+  }
+
+  // ── Fluxo 2: URL/ID → busca via API (formato antigo) ──
   const input = body.url?.trim();
   if (!input) {
     return NextResponse.json({ error: 'Parâmetro obrigatório: url (link do anúncio).' }, { status: 400 });
@@ -56,7 +83,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         error: 'Não foi possível identificar o ID do produto no link.',
-        dica: 'Cole a URL completa do anúncio (ex: https://www.mercadolivre.com.br/MLB-1234567890-...) ou apenas o ID (ex: MLB1234567890).',
+        dica: 'Use o link curto de afiliado (meli.la/...), a URL da página social, ou um ID no formato MLB1234567890.',
       },
       { status: 400 }
     );

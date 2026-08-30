@@ -5,6 +5,15 @@ Consulte no início de cada interação para saber onde parou.
 
 ---
 
+## Sessão 2026-08-30 — Scraping da vitrine do afiliado (sem credenciais)
+
+- Descobertas: links de afiliado = `meli.la/XXX` → resolve para `/social/{nickname}`; IDs novos (`KY2Y2F-5W1X`, `MLBU...`) NÃO são aceitos pela API (404); página `/p/{id}` individual é bootstrap JS sem dados; a página social embute polycards com tudo (título, preço, imagem, permalink, params `matt_*`).
+- `src/lib/ml-scrape.ts`: resolve link curto, extrai polycards, monta imagem `D_NQ_NP_{id}-O.jpg`. Testado local: retorna 21 produtos da vitrine.
+- `GET /api/ml/link` agora: link de afiliado → `type:"list"` (scraping público); ID `MLB` antigo → `type:"single"` (API com token).
+- `POST /api/ml/links` aceita `{ item }` (scrape) ou `{ url }` (API).
+- Admin: lista da vitrine com "Adicionar" por produto.
+- Build OK. Pendência de KV (persistência) adiada pelo usuário.
+
 ## Sessão 2026-08-30 — Painel de links ML + vitrine de afiliados
 
 - Commit `d839bf6` (main): troca do search descontinuado por catálogo `/products/search` + endpoint `/api/ml/link` (buscar anúncio por link com token existente).

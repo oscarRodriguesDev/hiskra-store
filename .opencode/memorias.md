@@ -6,6 +6,9 @@ Registro de decisões e alterações do projeto.
 
 | Data | Decisão | Autor |
 |------|---------|-------|
+| 2026-08-30 | Links de afiliado do usuário vêm como `meli.la/...` (resolve para `/social/{nickname}`) e IDs no formato novo (`KY2Y2F-5W1X`, `user_product_id` `MLBU...`) que a API REST NÃO aceita (404). Solução: scraping da página pública social via polycards (`src/lib/ml-scrape.ts`) — SEM credenciais | VIBECODE |
+| 2026-08-30 | `GET /api/ml/link`: link de afiliado/`/social/` → scraping público (retorna `type:"list"` com produtos); ID `MLB...` antigo → API com token (retorna `type:"single"`) | VIBECODE |
+| 2026-08-30 | `POST /api/ml/links` aceita `{ item }` (dados prontos do scraping) ou `{ url }` (via API); admin mostra lista da vitrine com botão "Adicionar" individual | VIBECODE |
 | 2026-08-30 | Painel admin `/admin`: colar link do anúncio ML → buscar via `/api/ml/link` → salvar com toggle "Mostrar na loja"; endpoints `GET/POST /api/ml/links` e `PATCH/DELETE /api/ml/links/:itemId` | VIBECODE |
 | 2026-08-30 | Storage plugável em `src/lib/ml-store.ts`: Vercel KV (env `KV_REST_API_URL`/`KV_REST_API_TOKEN`) com fallback para arquivo local `data/ml-store.json` (produção Vercel NÃO persiste arquivo — precisa KV) | VIBECODE |
 | 2026-08-30 | Seção "Ofertas do Mercado Livre" (`MLStoreSection`) na página `/products` exibindo itens aprovados com link de afiliado | VIBECODE |

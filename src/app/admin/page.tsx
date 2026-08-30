@@ -15,7 +15,23 @@ interface MLStoredItem {
   createdAt: string;
 }
 
-interface LinkPreview {
+/** Produto vindo do scraping da vitrine (sem credenciais) */
+interface ScrapedMLProduct {
+  itemId?: string;
+  productId?: string;
+  userProductId?: string;
+  title: string;
+  price: number;
+  currency: string;
+  originalPrice: number | null;
+  imageUrl: string;
+  permalink: string;
+  affiliateUrl: string;
+}
+
+/** Produto vindo da API (formato antigo MLB...) */
+interface ApiSingle {
+  type: 'single';
   itemId: string;
   permalink: string;
   affiliateLink: string;
@@ -26,12 +42,16 @@ interface LinkPreview {
   };
 }
 
+type SearchResult =
+  | ApiSingle
+  | { type: 'list'; source: string; products: ScrapedMLProduct[]; count: number };
+
 export default function AdminLinksPage() {
   const [url, setUrl] = useState('');
   const [searching, setSearching] = useState(false);
-  const [saving, setSaving] = useState(false);
+  const [savingId, setSavingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [preview, setPreview] = useState<LinkPreview | null>(null);
+  const [result, setResult] = useState<SearchResult | null>(null);
   const [items, setItems] = useState<MLStoredItem[]>([]);
 
   const loadItems = useCallback(async () => {
@@ -52,7 +72,7 @@ export default function AdminLinksPage() {
     if (!url.trim()) return;
     setSearching(true);
     setError(null);
-    setPreview(null);
+    setResult(null);
     try {
       const res = await fetch(`/api/ml/link?url=${encodeURIComponent(url.trim())}`);
       const data = await res.json();
@@ -60,7 +80,7 @@ export default function AdminLinksPage() {
         setError(data.error || 'Não foi possível buscar o anúncio.');
         return;
       }
-      setPreview(data);
+      setResult(data);
     } catch {
       setError('Erro de conexão ao buscar o anúncio.');
     } finally {
@@ -68,28 +88,25 @@ export default function AdminLinksPage() {
     }
   }
 
-  async function handleAdd() {
-    if (!preview) return;
-    setSaving(true);
+  async function addToStore(payload: { url?: string; item?: ScrapedMLProduct }) {
+    setSavingId(payload.url || payload.item?.permalink || 'saving');
     setError(null);
     try {
       const res = await fetch('/api/ml/links', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: preview.itemId }),
+        body: JSON.stringify(payload),
       });
       const data = await res.json();
       if (!res.ok) {
         setError(data.error || 'Falha ao adicionar à loja.');
         return;
       }
-      setPreview(null);
-      setUrl('');
       await loadItems();
     } catch {
       setError('Erro de conexão ao adicionar.');
     } finally {
-      setSaving(false);
+      setSavingId(null);
     }
   }
 
@@ -108,7 +125,7 @@ export default function AdminLinksPage() {
     if (res.ok) await loadItems();
   }
 
-  const formatPrice = (v: number | null, currency: string) => {
+  const formatPrice = (v: number | null | undefined, currency: string) => {
     if (v === null || v === undefined) return 'Preço no ML';
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
@@ -118,7 +135,7 @@ export default function AdminLinksPage() {
 
   return (
     <div className="py-12 bg-gray-50 min-h-screen">
-      <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
         <div className="mb-8">
           <nav className="flex items-center gap-2 text-sm text-gray-500 mb-4" aria-label="Breadcrumb">
             <a href="/" className="hover:text-gray-900">Início</a>
@@ -127,14 +144,15 @@ export default function AdminLinksPage() {
           </nav>
           <h1 className="text-3xl md:text-4xl font-bold text-gray-900">Painel de links</h1>
           <p className="mt-2 text-gray-600">
-            Cole o link de um anúncio do Mercado Livre para buscar os dados e escolher se ele aparece na loja.
+            Cole seu link de afiliado (ex: <span className="font-mono text-sm">https://meli.la/XXXXXX</span>) e o
+            sistema busca os anúncios da sua vitrine — sem credenciais. Escolha quais mostrar na loja.
           </p>
         </div>
 
         {/* Buscar link */}
         <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
           <label htmlFor="ml-url" className="block text-sm font-medium text-gray-700 mb-2">
-            Link do anúncio
+            Link de afiliado ou ID do anúncio
           </label>
           <div className="flex flex-col sm:flex-row gap-3">
             <input
@@ -143,7 +161,7 @@ export default function AdminLinksPage() {
               value={url}
               onChange={(e) => setUrl(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-              placeholder="https://www.mercadolivre.com.br/MLB-1234567890-nome-do-produto"
+              placeholder="https://meli.la/1PAVx9r"
               className="flex-1 px-4 py-2.5 rounded-lg border border-gray-300 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
             />
             <button
@@ -154,21 +172,19 @@ export default function AdminLinksPage() {
               {searching ? 'Buscando...' : 'Buscar'}
             </button>
           </div>
-          {error && (
-            <p className="mt-3 text-sm text-red-600">{error}</p>
-          )}
+          {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
         </div>
 
-        {/* Preview do anúncio */}
-        {preview && (
+        {/* Resultado: produto único (API) ou lista da vitrine (scraping) */}
+        {result && result.type === 'single' && (
           <div className="mt-6 bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
             <h2 className="text-lg font-semibold text-gray-900 mb-4">Anúncio encontrado</h2>
             <div className="flex flex-col sm:flex-row gap-4">
               <div className="relative w-full sm:w-40 aspect-square rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
-                {preview.product.images[0] ? (
+                {result.product.images[0] ? (
                   <Image
-                    src={preview.product.images[0]}
-                    alt={preview.product.name}
+                    src={result.product.images[0]}
+                    alt={result.product.name}
                     fill
                     sizes="160px"
                     className="object-cover"
@@ -176,15 +192,15 @@ export default function AdminLinksPage() {
                 ) : null}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-500">ID: {preview.itemId}</p>
+                <p className="text-sm font-medium text-gray-500">ID: {result.itemId}</p>
                 <h3 className="mt-1 text-lg font-semibold text-gray-900 line-clamp-2">
-                  {preview.product.name}
+                  {result.product.name}
                 </h3>
                 <p className="mt-2 text-2xl font-bold text-gray-900">
-                  {formatPrice(preview.product.price, 'BRL')}
+                  {formatPrice(result.product.price, 'BRL')}
                 </p>
                 <a
-                  href={preview.permalink}
+                  href={result.permalink}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="mt-2 inline-block text-sm font-medium text-blue-600 hover:text-blue-800"
@@ -195,18 +211,65 @@ export default function AdminLinksPage() {
             </div>
             <div className="mt-4 flex justify-end">
               <button
-                onClick={handleAdd}
-                disabled={saving}
+                onClick={() => addToStore({ url: result.itemId })}
+                disabled={savingId !== null}
                 className="px-6 py-2.5 rounded-lg bg-gray-900 text-white font-medium hover:bg-gray-800 disabled:opacity-50 transition-colors"
               >
-                {saving ? 'Adicionando...' : 'Adicionar à loja'}
+                {savingId ? 'Adicionando...' : 'Adicionar à loja'}
               </button>
             </div>
           </div>
         )}
 
+        {result && result.type === 'list' && (
+          <div className="mt-6">
+            <h2 className="text-lg font-semibold text-gray-900 mb-1">
+              Produtos encontrados na sua vitrine
+            </h2>
+            <p className="text-sm text-gray-500 mb-4">
+              {result.count} anúncio{result.count !== 1 ? 's' : ''}. Clique em adicionar nos que quiser na loja.
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {result.products.map((p, i) => (
+                <div key={p.permalink || i} className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm flex gap-4">
+                  <div className="relative w-24 h-24 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
+                    {p.imageUrl ? (
+                      <Image src={p.imageUrl} alt={p.title} fill sizes="96px" className="object-cover" />
+                    ) : null}
+                  </div>
+                  <div className="flex-1 min-w-0 flex flex-col">
+                    <p className="text-xs font-medium text-gray-500">
+                      {p.itemId || p.productId || p.userProductId || 'Mercado Livre'}
+                    </p>
+                    <h3 className="mt-1 text-sm font-semibold text-gray-900 line-clamp-2">{p.title}</h3>
+                    <div className="mt-auto flex items-end justify-between gap-2 pt-2">
+                      <div>
+                        <span className="text-lg font-bold text-gray-900">
+                          {formatPrice(p.price, p.currency)}
+                        </span>
+                        {p.originalPrice ? (
+                          <span className="ml-2 text-sm text-gray-400 line-through">
+                            {formatPrice(p.originalPrice, p.currency)}
+                          </span>
+                        ) : null}
+                      </div>
+                      <button
+                        onClick={() => addToStore({ item: p })}
+                        disabled={savingId !== null}
+                        className="px-4 py-2 rounded-lg bg-gray-900 text-white text-sm font-medium hover:bg-gray-800 disabled:opacity-50 transition-colors"
+                      >
+                        {savingId === p.permalink ? 'Adicionando...' : 'Adicionar'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Lista de itens salvos */}
-        <div className="mt-8">
+        <div className="mt-10">
           <h2 className="text-xl font-semibold text-gray-900 mb-4">
             Itens salvos
             <span className="ml-2 text-sm font-normal text-gray-500">({items.length})</span>
@@ -214,7 +277,7 @@ export default function AdminLinksPage() {
 
           {items.length === 0 ? (
             <div className="bg-white rounded-xl border border-gray-100 p-8 text-center text-gray-500">
-              Nenhum item salvo ainda. Cole um link acima para começar.
+              Nenhum item salvo ainda. Cole seu link de afiliado acima para começar.
             </div>
           ) : (
             <ul className="space-y-3">
