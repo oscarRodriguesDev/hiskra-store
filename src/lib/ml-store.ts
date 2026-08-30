@@ -67,12 +67,21 @@ async function writeItems(items: MLStoredItem[]): Promise<void> {
   }
 
   const dir = path.join(process.cwd(), 'data');
-  await fs.mkdir(dir, { recursive: true });
-  await fs.writeFile(
-    path.join(dir, 'ml-store.json'),
-    JSON.stringify(items, null, 2),
-    'utf-8'
-  );
+  try {
+    await fs.mkdir(dir, { recursive: true });
+    await fs.writeFile(
+      path.join(dir, 'ml-store.json'),
+      JSON.stringify(items, null, 2),
+      'utf-8'
+    );
+  } catch (error: any) {
+    if (error?.code === 'ENOENT' || error?.code === 'EACCES' || error?.code === 'EROFS') {
+      throw new Error(
+        'Armazenamento não configurado em produção. Crie o Vercel KV no painel da Vercel (Storage) e faça redeploy — o sistema detecta as env vars KV_REST_API_URL e KV_REST_API_TOKEN automaticamente.'
+      );
+    }
+    throw error;
+  }
 }
 
 export async function getStoredItems(): Promise<MLStoredItem[]> {
