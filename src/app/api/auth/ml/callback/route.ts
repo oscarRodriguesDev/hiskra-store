@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
 
   const clientId = process.env.ML_CLIENT_ID;
   const clientSecret = process.env.ML_CLIENT_SECRET;
-  const redirectUri = `${process.env.NEXT_PUBLIC_APP_URL || 'https://hiskra-store.vercel.app'}/api/auth/ml/callback`;
+  const redirectUri = `${process.env.NEXT_PUBLIC_APP_URL || 'https://store.hiskra.com.br'}/api/auth/ml/callback`;
 
   if (!clientId || !clientSecret) {
     console.error('ML credentials not configured');

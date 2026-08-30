@@ -1,0 +1,1 @@
+https://auth.mercadolivre.com.br/authorization?response_type=code&client_id=1170326412027864&redirect_uri=https://store.hiskra.com.br/api/auth/ml/callback
