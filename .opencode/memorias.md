@@ -6,6 +6,11 @@ Registro de decisões e alterações do projeto.
 
 | Data | Decisão | Autor |
 |------|---------|-------|
+| 2026-08-30 | Painel admin `/admin`: colar link do anúncio ML → buscar via `/api/ml/link` → salvar com toggle "Mostrar na loja"; endpoints `GET/POST /api/ml/links` e `PATCH/DELETE /api/ml/links/:itemId` | VIBECODE |
+| 2026-08-30 | Storage plugável em `src/lib/ml-store.ts`: Vercel KV (env `KV_REST_API_URL`/`KV_REST_API_TOKEN`) com fallback para arquivo local `data/ml-store.json` (produção Vercel NÃO persiste arquivo — precisa KV) | VIBECODE |
+| 2026-08-30 | Seção "Ofertas do Mercado Livre" (`MLStoreSection`) na página `/products` exibindo itens aprovados com link de afiliado | VIBECODE |
+| 2026-08-30 | API ML: `/sites/{site}/search` descontinuado (403); usar `/products/search` (catálogo, sem preço) e `/items/{id}` (preço real, token existente) | VIBECODE |
+| 2026-08-30 | `getCatalogPermalink()` adicionado em `src/lib/mercadolivre.ts` (link público `/p/{catalogId}`) | VIBECODE |
 | 2026-08-22 | Documentação completa de requisitos funcionais/não-funcionais, fluxos, regras de negócio e estados do carrinho (anônimo vs autenticado) para Hiskra Store | VIBECODE |
 | 2026-07-07 | `hiskra-code` sem argumentos agora auto-inicia `.opencode/` e lança o opencode | VIBECODE |
 | 2026-07-07 | Adicionado `--help` / `-h` / `help` para exibir ajuda | VIBECODE |

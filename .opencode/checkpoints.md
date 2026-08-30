@@ -5,6 +5,20 @@ Consulte no início de cada interação para saber onde parou.
 
 ---
 
+## Sessão 2026-08-30 — Painel de links ML + vitrine de afiliados
+
+- Commit `d839bf6` (main): troca do search descontinuado por catálogo `/products/search` + endpoint `/api/ml/link` (buscar anúncio por link com token existente).
+- Commit `15a70be` (main): painel admin `/admin` (colar link → buscar → adicionar → toggle "Mostrar na loja"/remover) + endpoints `GET/POST /api/ml/links`, `PATCH/DELETE /api/ml/links/:itemId` + seção "Ofertas do Mercado Livre" em `/products` + storage plugável `src/lib/ml-store.ts`.
+- Build OK (`npm run build`).
+
+### Pendências
+- ⚠️ Produção Vercel: configurar Vercel KV (`KV_REST_API_URL`, `KV_REST_API_TOKEN`) para persistir os itens; sem KV o storage cai para arquivo (só funciona em dev).
+- Testar em produção: fluxo completo do `/admin` (buscar, adicionar, toggle) e `/api/ml/link`.
+- Proteger `/admin` e endpoints `/api/ml/links*` com autenticação (hoje abertos).
+- Opcional: preço do catálogo via Prices API (`/items/{id}/sale_price`, `/items/{id}/prices`).
+
+---
+
 ## Estado Inicial
 
 - Projeto inicializado com `hiskra-code init`
