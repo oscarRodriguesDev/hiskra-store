@@ -5,6 +5,19 @@ Consulte no início de cada interação para saber onde parou.
 
 ---
 
+## Sessão 2026-08-30 — Estado final: loja no ar, pronta para divulgar
+
+- **Deploy automático confirmado**: Vercel (GitHub) publica cada push no `main` — nada de redeploy manual. Verificado em produção:
+  - `GET /api/ml/link?url=meli.la/1PAVx9r` → 21 produtos com `affiliateUrl` = vitrine (`/social/rodriguesoscar09?matt_word=...&matt_tool=...&ref=...`) ✓
+  - `GET /api/ml/links` → 200, Prisma+Turso conectados (sem ENOENT) ✓
+- **Bug de cache resolvido**: `/products` era estática (`○`) e mostrava HTML congelado do build (2 notebooks Lenovo que nem estavam mais no banco) e ocultava itens novos. Fix commit `30a4fd8`: `export const dynamic = 'force-dynamic'` → página lê o Turso a cada request. Confirmado em produção: mostra só o ASUS salvo.
+- **Banco atual (Turso)**: 1 item — `MLB5382062300` Notebook ASUS Vivobook 15 (o usuário adicionou; Lenovos já não estavam mais no banco, eram fantasma do cache).
+- **Atribuição de comissão esclarecida**: link interno de produto dentro da vitrine (com `matt_tool_id`/`source=affiliate-profile`) funciona apenas como continuação da sessão iniciada com `matt_word`; avulso/fora da vitrine NÃO identifica o afiliado → Hiskra segue usando sempre o link da vitrine.
+- **Usuário vai**: adicionar produtos via `/admin` (colando `https://meli.la/1PAVx9r`) e divulgar a loja com ads (funil: ads → home/`/products` → vitrine com matt_word → compra).
+- Pendências registradas: auth para `/admin` + `/api/ml/links*` (hoje abertos); teste do fluxo de conversão via relatório de afiliados; `KY2Y2F-5W1X` sem solução (404 API); migração opcional Supabase/Postgres.
+
+---
+
 ## Sessão 2026-08-30 — Garantia de vínculo: nada entra na loja sem comissão
 
 - `hasAffiliateTracking(url)` em `ml-scrape.ts`: verdadeiro se o link tem `matt_word` ou `matt_tool`.
