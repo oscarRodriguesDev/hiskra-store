@@ -71,17 +71,28 @@ export async function GET(request: NextRequest) {
 
     const tokens = await tokenResponse.json();
 
+    // Persiste os tokens no banco para renovação automática futura
+    try {
+      const { saveMLTokenBag } = await import('@/lib/ml-tokens');
+      await saveMLTokenBag({
+        accessToken: tokens.access_token,
+        refreshToken: tokens.refresh_token,
+        expiresAt: Date.now() + (tokens.expires_in || 21600) * 1000,
+      });
+    } catch (err) {
+      console.error('ML tokens persist falhou:', err);
+    }
+
     // Limpar cookie do code_verifier
-    const successUrl = new URL('/?ml_success=1', request.url);
-    successUrl.searchParams.set('refresh_token', tokens.refresh_token);
-    successUrl.searchParams.set('expires_in', String(tokens.expires_in));
+    const successUrl = new URL('/', request.url);
+    successUrl.searchParams.set('ml_success', '1');
 
     const response = NextResponse.redirect(successUrl);
     response.cookies.delete('ml_code_verifier');
 
-    console.log('ML Tokens obtained:', {
-      access_token: tokens.access_token?.substring(0, 20) + '...',
-      refresh_token: tokens.refresh_token?.substring(0, 20) + '...',
+    console.log('ML Tokens obtidos e persistidos:', {
+      has_access: !!tokens.access_token,
+      has_refresh: !!tokens.refresh_token,
       expires_in: tokens.expires_in,
     });
 

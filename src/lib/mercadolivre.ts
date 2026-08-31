@@ -111,36 +111,75 @@ interface MLAuth {
   clientSecret: string;
 }
 
-// Cache simples em memória (em produção usar Redis/banco)
+// Cache simples em memória (em produção o refresh_token fica persistido no banco)
 let authCache: MLAuth | null = null;
 
-export function getMLAuth(): MLAuth | null {
-  if (!authCache) {
-    // Carregar de variáveis de ambiente
-    const clientId = process.env.ML_CLIENT_ID;
-    const clientSecret = process.env.ML_CLIENT_SECRET;
-    const refreshToken = process.env.ML_REFRESH_TOKEN;
+// Carrega as credenciais do app (client_id/secret) — sempre de env vars
+function getMLClientAuth(): { clientId: string; clientSecret: string; refreshToken: string } | null {
+  const clientId = process.env.ML_CLIENT_ID;
+  const clientSecret = process.env.ML_CLIENT_SECRET;
+  if (clientId && clientSecret) {
+    return { clientId, clientSecret, refreshToken: process.env.ML_REFRESH_TOKEN || '' };
+  }
+  return null;
+}
 
-    if (clientId && clientSecret && refreshToken) {
-      authCache = {
-        accessToken: '',
-        refreshToken,
-        expiresAt: 0,
-        clientId,
-        clientSecret,
+/**
+ * Carrega o estado de auth: client_id/secret das env vars e os tokens do banco
+ * (se houver) ou do .env como fallback. O refresh_token é renovado a cada uso
+ * e salvo no banco — assim o admin não precisa renovar manualmente.
+ */
+export async function loadMLAuth(): Promise<MLAuth | null> {
+  const client = getMLClientAuth();
+  if (!client) return null;
+
+  // Tokens persistidos dinamicamente (banco) têm prioridade
+  try {
+    const { getMLTokenBag } = await import('@/lib/ml-tokens');
+    const bag = await getMLTokenBag();
+    if (bag && bag.refreshToken) {
+      return {
+        accessToken: bag.accessToken,
+        refreshToken: bag.refreshToken,
+        expiresAt: bag.expiresAt,
+        clientId: client.clientId,
+        clientSecret: client.clientSecret,
       };
     }
+  } catch {
+    // banco indisponível — segue para fallback
   }
+
+  // Fallback: refresh_token do .env (primeira configuração)
+  if (client.refreshToken) {
+    return {
+      accessToken: '',
+      refreshToken: client.refreshToken,
+      expiresAt: 0,
+      clientId: client.clientId,
+      clientSecret: client.clientSecret,
+    };
+  }
+
+  return null;
+}
+
+export function getMLAuth(): MLAuth | null {
   return authCache;
 }
 
 export async function refreshMLAccessToken(): Promise<string> {
-  const auth = getMLAuth();
+  const auth = (await loadMLAuth()) ?? authCache;
   if (!auth) throw new Error('Credenciais ML não configuradas');
+  authCache = auth;
 
   // Se token ainda válido (com margem de 5 min)
   if (auth.accessToken && Date.now() < auth.expiresAt - 5 * 60 * 1000) {
     return auth.accessToken;
+  }
+
+  if (!auth.refreshToken) {
+    throw new Error('Refresh token do ML não disponível — conecte o app do Mercado Livre.');
   }
 
   const response = await fetch(`${ML_BASE_URL}/oauth/token`, {
@@ -156,15 +195,34 @@ export async function refreshMLAccessToken(): Promise<string> {
 
   if (!response.ok) {
     const error = await response.text();
+    // token inválido/expirado → limpar, para forçar reconexão do app
+    if (response.status === 400 || response.status === 401) {
+      try {
+        const { clearMLTokenBag } = await import('@/lib/ml-tokens');
+        await clearMLTokenBag();
+        authCache = null;
+      } catch { /* ignore */ }
+    }
     throw new Error(`Erro ao renovar token ML: ${error}`);
   }
 
   const data = await response.json();
   auth.accessToken = data.access_token;
-  auth.refreshToken = data.refresh_token;
-  auth.expiresAt = Date.now() + data.expires_in * 1000;
+  auth.refreshToken = data.refresh_token || auth.refreshToken;
+  auth.expiresAt = Date.now() + (data.expires_in || 21600) * 1000;
 
-  // TODO: Salvar novo refresh_token no .env ou banco
+  // Persiste o refresh_token novo no banco (evita vencer no .env)
+  try {
+    const { saveMLTokenBag } = await import('@/lib/ml-tokens');
+    await saveMLTokenBag({
+      accessToken: auth.accessToken,
+      refreshToken: auth.refreshToken,
+      expiresAt: auth.expiresAt,
+    });
+  } catch { /* persistência é best-effort */ }
+
+  // Reinicia o cache para refletir o novo refresh_token
+  authCache = { ...auth };
   return auth.accessToken;
 }
 

@@ -31,6 +31,15 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'E-mail ou senha incorretos.' }, { status: 401 });
   }
 
+  // Renova o token do app ML automaticamente no login (não bloqueia o acesso:
+  // se o ML não tiver refresh válido, o login funciona e a conexão falha depois).
+  try {
+    const { refreshMLAccessToken } = await import('@/lib/mercadolivre');
+    await refreshMLAccessToken();
+  } catch {
+    // sem refresh válido — o /admin exibe aviso para conectar o app
+  }
+
   const token = await signSession(email);
   const res = NextResponse.json({ ok: true });
   res.cookies.set(COOKIE_NAME, token, cookieOptions());

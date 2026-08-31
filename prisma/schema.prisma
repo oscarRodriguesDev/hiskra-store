@@ -24,3 +24,13 @@ model StoreItem {
 
   @@map("ml_store")
 }
+
+// Pares chave-valor para config persistida em runtime (ex: tokens do app ML
+// renovados dinamicamente — diferente das env vars, que não mudam no deploy).
+model AppSetting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  @@map("app_settings")
+}

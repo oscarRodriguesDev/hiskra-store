@@ -53,6 +53,11 @@ export default function AdminLinksPage() {
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<SearchResult | null>(null);
   const [items, setItems] = useState<MLStoredItem[]>([]);
+  const [mlStatus, setMlStatus] = useState<{ connected: boolean; message: string; loading: boolean }>({
+    connected: false,
+    message: '',
+    loading: true,
+  });
 
   const loadItems = useCallback(async () => {
     try {
@@ -66,6 +71,16 @@ export default function AdminLinksPage() {
 
   useEffect(() => {
     loadItems();
+    fetch('/api/admin/ml-status')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) =>
+        setMlStatus({
+          connected: data?.connected ?? false,
+          message: data?.message || '',
+          loading: false,
+        })
+      )
+      .catch(() => setMlStatus({ connected: false, message: '', loading: false }));
   }, [loadItems]);
 
   async function handleSearch() {
@@ -163,6 +178,24 @@ export default function AdminLinksPage() {
             Cada produto salvo usa o link da sua vitrine com o seu vínculo (matt_word/matt_tool) — toda venda
             feita por esses links é atribuída a você.
           </p>
+
+          {/* Status da API do Mercado Livre (galeria de fotos) */}
+          {!mlStatus.loading && !mlStatus.connected && (
+            <div className="mt-3 text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+              <strong>Galeria de fotos:</strong> {mlStatus.message}{' '}
+              <a
+                href="/api/auth/ml/auth"
+                className="underline font-medium hover:text-amber-900"
+              >
+                Conectar app do Mercado Livre
+              </a>
+            </div>
+          )}
+          {mlStatus.connected && (
+            <div className="mt-3 text-sm text-green-700 bg-green-50 border border-green-200 rounded-lg px-3 py-2">
+              <strong>API do Mercado Livre conectada</strong> — galeria de fotos ativa.
+            </div>
+          )}
         </div>
 
         {/* Buscar link */}

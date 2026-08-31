@@ -5,7 +5,20 @@ Consulte no início de cada interação para saber onde parou.
 
 ---
 
-## Sessão 2026-08-31 — Página interna do produto com galeria (Opção 2)
+## Sessão 2026-08-31 — Renovação automática do token ML (persistida no banco)
+
+- Causa da galeria de 1 foto: credenciais do app ML estavam inválidas no `.env` local (`invalid client_id or client_secret`) e ausentes na Vercel → `getMLProduct` falha → fallback 1 foto. Além disso, `refreshMLAccessToken` não salvava o refresh_token novo (vencia).
+- **Schema**: nova tabela `app_settings` (chave-valor) p/ persistir tokens em runtime. `db:apply` idempotente; Client regenerado; upsert testado ✓.
+- `src/lib/ml-tokens.ts`: `getMLTokenBag`/`saveMLTokenBag`/`clearMLTokenBag` (chaves `ml_access_token`, `ml_refresh_token`, `ml_access_expires_at`, `ml_token_version`).
+- `mercadolivre.ts` refatorado:
+  - `loadMLAuth()`: client_id/secret de env; **tokens do banco têm prioridade**, fallback `.env`.
+  - `refreshMLAccessToken()`: renova e **salva o refresh_token novo no banco**; em 400/401 limpa tokens p/ forçar reconexão.
+- `POST /api/admin/login`: chama `refreshMLAccessToken()` de forma **não bloqueante** → renova automaticamente ao logar.
+- `/api/auth/ml/callback`: **persiste** access+refresh+expires no banco (antes jogava na URL e perdia). `/api/auth/ml/auth` continua gerando a URL de autorização (PKCE).
+- `GET /api/admin/ml-status` (autenticada): status da conexão ML. Admin mostra banner: se não conectado, link "Conectar app do Mercado Livre" (`/api/auth/ml/auth`); se ok, aviso verde.
+- ⚠️ **Passo manual único restante** (não automático): OAuth do ML exige 1 autorização inicial (tela do ML) para "plantar" o refresh_token válido — renovar funciona só se houver refresh base vivo. Depois disso, tudo automático no login. O refresh_token de apps ML também expira com o tempo (reautorizar ocasionalmente).
+
+---
 
 - Usuário pediu: navegar nas fotos do produto DENTRO do site; só ser direcionado pro ML ao clicar em "Comprar".
 - **Banco**: nova coluna `images` (JSON, texto) na `ml_store` (schema + ALTER TABLE + script `db:apply` idempotente com `ALTER ... ADD COLUMN` tratando "duplicate column"). Client Prisma regenerado.
