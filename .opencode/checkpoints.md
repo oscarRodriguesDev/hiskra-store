@@ -5,6 +5,20 @@ Consulte no início de cada interação para saber onde parou.
 
 ---
 
+## Sessão 2026-08-31 — Página interna do produto com galeria (Opção 2)
+
+- Usuário pediu: navegar nas fotos do produto DENTRO do site; só ser direcionado pro ML ao clicar em "Comprar".
+- **Banco**: nova coluna `images` (JSON, texto) na `ml_store` (schema + ALTER TABLE + script `db:apply` idempotente com `ALTER ... ADD COLUMN` tratando "duplicate column"). Client Prisma regenerado.
+- `ml-store.ts`: `MLStoredItem.images: string[]`, parseado em `toClientItem` (com fallback para `[image]`), salvo no upsert create/update e no `updateStoredItem`.
+- `POST /api/ml/links`: nos 2 fluxos busca a galeria via `getMLProduct(itemId)` (fotos `secure_url`/`url`), com fallback para a imagem única quando sem credencial/falha.
+- **Página interna**: `/product/[slug]` reativada — busca o item por `itemId` no banco (`getStoredItems`) e renderiza `ProductDetailClient` com galeria (thumbnails, seleção, badge de desconto) + **botão "Comprar agora"** que é o ÚNICO ponto que sai pro link de afiliado. `page.tsx` é server component (`force-dynamic`, 404 se não achar).
+- **Cards** em `MLStoreSection`: imagem, título e botão agora apontam para `/product/{itemId}` ("Ver detalhes") — o visitante fica no site; sai só no "Comprar" da página interna.
+- Build OK (`/product/[slug]`, `/products`, `/api/*` dinâmicos). Teste local de persistência da galeria ✓ (upsert/find/delete com 3 fotos).
+- Obs.: `[slug]` = `itemId` — URLs `/product/MLB...` (acessadas via card).
+- ⚠️ Produtos adicionados ANTES dessa mudança não têm galeria (só imagem única) — readicionar pelo `meli.la` para popular a galeria.
+
+---
+
 ## Sessão 2026-08-30 — Header limpo para a primeira etapa
 
 - Removidas categorias mortas do template (Camisetas/Moletons/Acessórios — links `/products?category=...` que nem existiam) do header desktop e mobile. Nav agora: **Produtos** (+ Painel).

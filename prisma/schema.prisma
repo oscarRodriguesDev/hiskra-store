@@ -14,6 +14,7 @@ model StoreItem {
   originalPrice  Float?   @map("original_price")
   currencyId     String   @default("BRL") @map("currency_id")
   image          String   @default("") @map("image")
+  images         String   @default("[]") @map("images") // JSON: URLs de todas as fotos do produto
   permalink      String
   affiliateLink  String   @default("") @map("affiliate_link")
   showInStore    Boolean  @default(true) @map("show_in_store")

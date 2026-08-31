@@ -42,11 +42,9 @@ export async function MLStoreSection() {
             key={item.itemId}
             className="group flex flex-col bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm hover:shadow-lg transition-shadow duration-300"
           >
-            <a
-              href={item.affiliateLink || item.permalink}
-              target="_blank"
-              rel="noopener noreferrer sponsored"
-              className="relative aspect-square overflow-hidden bg-gray-50"
+            <Link
+              href={`/product/${item.itemId}`}
+              className="relative aspect-square overflow-hidden bg-gray-50 block"
               aria-label={`Ver ${item.title}`}
             >
               {item.image && (
@@ -59,22 +57,17 @@ export async function MLStoreSection() {
                   loading="lazy"
                 />
               )}
-            </a>
+            </Link>
 
             <div className="flex-1 flex flex-col p-4">
-              <a
-                href={item.affiliateLink || item.permalink}
-                target="_blank"
-                rel="noopener noreferrer sponsored"
-                className="flex-1 min-w-0"
-              >
+              <Link href={`/product/${item.itemId}`} className="flex-1 min-w-0">
                 <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
                   Oferta
                 </p>
                 <h3 className="mt-1 text-base font-semibold text-gray-900 line-clamp-2 group-hover:text-black transition-colors">
                   {item.title}
                 </h3>
-              </a>
+              </Link>
 
               <div className="mt-auto flex items-baseline justify-between gap-2 pt-2 border-t border-gray-100">
                 <span className="text-lg font-bold text-gray-900">
@@ -82,14 +75,12 @@ export async function MLStoreSection() {
                 </span>
               </div>
 
-              <a
-                href={item.affiliateLink || item.permalink}
-                target="_blank"
-                rel="noopener noreferrer sponsored"
+              <Link
+                href={`/product/${item.itemId}`}
                 className="mt-3 w-full inline-flex items-center justify-center px-4 py-2 rounded-lg bg-gray-900 text-white text-sm font-medium hover:bg-gray-800 transition-colors"
               >
-                Ver oferta
-              </a>
+                Ver detalhes
+              </Link>
             </div>
           </article>
         ))}

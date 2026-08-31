@@ -1,7 +1,15 @@
 import { notFound } from 'next/navigation';
+import { getStoredItems } from '@/lib/ml-store';
+import { ProductDetailClient } from './ProductDetailClient';
 
-// Página de detalhe desativada: as ofertas do Mercado Livre abrem direto no
-// anúncio externo (link de afiliado), então não há produto interno para exibir.
-export default async function ProductDetailPage() {
-  notFound();
+// Acessa o produto por itemId (ex: /product/MLB5382062300)
+export const dynamic = 'force-dynamic';
+
+export default async function ProductDetailPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const items = await getStoredItems();
+  const item = items.find((i) => i.itemId === slug);
+  if (!item) notFound();
+
+  return <ProductDetailClient item={item} />;
 }

@@ -11,6 +11,7 @@ export interface MLStoredItem {
   originalPrice: number | null;
   currencyId: string;
   image: string;
+  images: string[];        // galeria (todas as fotos)
   permalink: string;
   affiliateLink: string;
   showInStore: boolean;
@@ -30,6 +31,7 @@ function toClientItem(row: {
   originalPrice: number | null;
   currencyId: string;
   image: string;
+  images: string;
   affiliateLink: string;
   permalink: string;
   title: string;
@@ -39,6 +41,14 @@ function toClientItem(row: {
   createdAt: Date;
   showInStore: boolean;
 }): MLStoredItem {
+  let images: string[] = [];
+  try {
+    const parsed = JSON.parse(row.images || '[]');
+    images = Array.isArray(parsed) ? parsed : [];
+  } catch {
+    images = [];
+  }
+  if (images.length === 0 && row.image) images = [row.image];
   return {
     itemId: row.itemId,
     title: row.title,
@@ -46,6 +56,7 @@ function toClientItem(row: {
     originalPrice: row.originalPrice,
     currencyId: row.currencyId,
     image: row.image,
+    images,
     permalink: row.permalink,
     affiliateLink: row.affiliateLink || row.permalink,
     showInStore: row.showInStore,
@@ -78,6 +89,7 @@ export async function addStoredItem(
   }
 ): Promise<MLStoredItem> {
   if (!prisma) throw dbError();
+  const imagesJson = JSON.stringify(Array.isArray(item.images) ? item.images.filter(Boolean) : []);
   const row = await prisma.storeItem.upsert({
     where: { itemId: item.itemId },
     create: {
@@ -87,6 +99,7 @@ export async function addStoredItem(
       originalPrice: item.originalPrice,
       currencyId: item.currencyId,
       image: item.image,
+      images: imagesJson,
       permalink: item.permalink,
       affiliateLink: item.affiliateLink || item.permalink,
       showInStore: item.showInStore ?? true,
@@ -100,6 +113,7 @@ export async function addStoredItem(
       originalPrice: item.originalPrice,
       currencyId: item.currencyId,
       image: item.image,
+      images: imagesJson,
       permalink: item.permalink,
       affiliateLink: item.affiliateLink || item.permalink,
       sellerNickname: item.sellerNickname ?? null,
@@ -122,6 +136,7 @@ export async function updateStoredItem(
         price: patch.price,
         originalPrice: patch.originalPrice,
         image: patch.image,
+        images: Array.isArray(patch.images) ? JSON.stringify(patch.images.filter(Boolean)) : undefined,
         permalink: patch.permalink,
         affiliateLink: patch.affiliateLink,
         title: patch.title,

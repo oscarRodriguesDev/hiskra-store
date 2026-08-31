@@ -32,6 +32,16 @@ const stmts = idempotent
   .filter(Boolean)
   .map((s) => ({ type: 'execute', stmt: { sql: s, args: [] } }));
 
+// 3) Migração aditiva de colunas que já existem em bancos antigos
+//    (o CREATE TABLE IF NOT EXISTS não altera tabelas existentes).
+const MIGRATIONS = [
+  // Adiciona a coluna "images" (galeria) — NOT NULL com default, idempotente
+  `ALTER TABLE ml_store ADD COLUMN images TEXT NOT NULL DEFAULT '[]'`,
+];
+for (const m of MIGRATIONS) {
+  stmts.push({ type: 'execute', stmt: { sql: m, args: [] } });
+}
+
 const res = await fetch(`${httpUrl}/v2/pipeline`, {
   method: 'POST',
   headers: { Authorization: `Bearer ${TOKEN_SECRET}`, 'Content-Type': 'application/json' },
@@ -41,7 +51,13 @@ const res = await fetch(`${httpUrl}/v2/pipeline`, {
 const data = await res.json();
 const erro = data.results?.find((r) => r.type === 'error');
 if (erro) {
-  console.error('Falha ao aplicar schema:', JSON.stringify(erro.error));
-  process.exit(1);
+  // ALTER TABLE falha com "duplicate column name" quando a coluna já existe — aceitável
+  const msg = JSON.stringify(erro.error || '');
+  if (!/duplicate column/i.test(msg)) {
+    console.error('Falha ao aplicar schema:', msg);
+    process.exit(1);
+  }
+  console.log('Schema aplicado (aviso: coluna já existia — ok)');
+} else {
+  console.log('Schema aplicado com sucesso no Turso');
 }
-console.log('Schema aplicado com sucesso no Turso');

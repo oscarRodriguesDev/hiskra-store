@@ -77,6 +77,22 @@ export async function POST(request: NextRequest) {
     }
 
     const itemId = it.itemId || it.productId || it.userProductId || it.permalink;
+
+    // Busca as fotos da galeria via API do ML (se houver credencial); senão, cai na imagem única do card
+    let gallery: string[] = [];
+    if (itemId && /^ML[BACDEHMOUV]{2}\d{6,}$/.test(itemId)) {
+      try {
+        const { getMLProduct } = await import('@/lib/mercadolivre');
+        const ml = await getMLProduct(itemId);
+        gallery = (ml.pictures || [])
+          .map((p) => p.secure_url || p.url)
+          .filter(Boolean);
+      } catch {
+        gallery = [];
+      }
+    }
+    if (gallery.length === 0 && it.imageUrl) gallery = [it.imageUrl];
+
     const stored = await addStoredItem({
       itemId,
       title: it.title,
@@ -84,6 +100,7 @@ export async function POST(request: NextRequest) {
       originalPrice: it.originalPrice,
       currencyId: it.currency,
       image: it.imageUrl,
+      images: gallery,
       permalink: it.permalink,
       affiliateLink,
       sellerNickname: undefined,
@@ -126,13 +143,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const image = mlProduct.pictures?.[0]?.secure_url || mlProduct.pictures?.[0]?.url || product.images[0] || '';
+    const gallery = (mlProduct.pictures || [])
+      .map((p) => p.secure_url || p.url)
+      .filter(Boolean).length > 0
+      ? (mlProduct.pictures || []).map((p) => p.secure_url || p.url).filter(Boolean)
+      : product.images;
+
     const stored = await addStoredItem({
       itemId: mlProduct.id,
       title: mlProduct.title,
       price: mlProduct.price ?? null,
       originalPrice: mlProduct.original_price ?? null,
       currencyId: mlProduct.currency_id,
-      image: mlProduct.pictures?.[0]?.secure_url || mlProduct.pictures?.[0]?.url || product.images[0] || '',
+      image,
+      images: gallery,
       permalink,
       affiliateLink,
       sellerNickname: mlProduct.seller_address?.nickname,
