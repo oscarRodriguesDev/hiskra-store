@@ -5,7 +5,15 @@ Consulte no início de cada interação para saber onde parou.
 
 ---
 
-## Sessão 2026-08-31 — Renovação automática do token ML (persistida no banco)
+## Sessão 2026-08-31 — Bug crítico do regex de ID do ML (galeria de 1 foto)
+
+- Causa raiz da "galeria de 1 foto": o regex de validação de ID do item do ML estava errado. Usava `ML[BACDEHMOUV]{2}\d{6,}$` (que exige 2 letras após `ML`), mas o formato REAL dos IDs do ML é `ML` + **1 letra** de site + dígitos (ex: `MLB5761444412`, `MLA`, `MLC`) e tem **7+ dígitos**. Com o regex errado, `getMLProduct(itemId)` NUNCA era chamado → caía sempre no fallback de 1 foto.
+- Corrigido para `^ML[A-Z]\d{7,}$` (e URL `(ML[A-Z])-(\d{7,})`) em `src/lib/mercadolivre.ts` (`extractMLItemId`) e `src/app/api/ml/links/route.ts` (busca da galeria). Teste da regex ✓ (aceita `MLB...`, rejeita `MLBU...`, extrai de URL).
+- Observação: o `userProductId` do scrape (`MLBU...`) é rejeitado corretamente — não é item de API válido.
+- Status "conectada" do admin agora é real (tenta renovar o token de verdade — commit `18897f6`).
+- Depois do build/deploy: readicionar produtos pelo `meli.la` para a galeria popular.
+
+---
 
 - Causa da galeria de 1 foto: credenciais do app ML estavam inválidas no `.env` local (`invalid client_id or client_secret`) e ausentes na Vercel → `getMLProduct` falha → fallback 1 foto. Além disso, `refreshMLAccessToken` não salvava o refresh_token novo (vencia).
 - **Schema**: nova tabela `app_settings` (chave-valor) p/ persistir tokens em runtime. `db:apply` idempotente; Client regenerado; upsert testado ✓.

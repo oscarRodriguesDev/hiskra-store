@@ -303,14 +303,14 @@ export async function getMLProduct(itemId: string): Promise<MLProduct> {
 export function extractMLItemId(input: string): string | null {
   const trimmed = input.trim();
 
-  // Já é um ID direto (ex: MLB1234567890)
-  if (/^ML[BACDEHMOUV]{2}\d{6,}$/.test(trimmed)) {
+  // Já é um ID direto (ex: MLB5761444412) — padrão: ML + código de site (1 letra) + 7+ dígitos
+  if (/^ML[A-Z]\d{7,}$/.test(trimmed)) {
     return trimmed;
   }
 
-  // URL de anúncio (ex: https://www.mercadolivre.com.br/MLB-1234567890-nome-...)
-  // ou produto.mercadolivre.com.br/MLB-1234567890-...
-  const matches = trimmed.match(/(ML[BACDEHMOUV]{2})-(\d{6,})/);
+  // URL de anúncio (ex: https://www.mercadolivre.com.br/MLB-5761444412-nome-...)
+  // ou produto.mercadolivre.com.br/MLB-5761444412-...
+  const matches = trimmed.match(/(ML[A-Z])-(\d{7,})/);
   if (matches) {
     return `${matches[1]}${matches[2]}`;
   }

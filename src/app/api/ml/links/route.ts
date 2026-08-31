@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
 
     // Busca as fotos da galeria via API do ML (se houver credencial); senão, cai na imagem única do card
     let gallery: string[] = [];
-    if (itemId && /^ML[BACDEHMOUV]{2}\d{6,}$/.test(itemId)) {
+    if (itemId && /^ML[A-Z]\d{7,}$/.test(itemId)) {
       try {
         const { getMLProduct } = await import('@/lib/mercadolivre');
         const ml = await getMLProduct(itemId);
