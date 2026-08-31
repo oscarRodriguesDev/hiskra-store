@@ -34,7 +34,17 @@ export async function GET(request: NextRequest) {
     out.urls = (ml.pictures || []).slice(0, 6).map((p) => (p.secure_url || p.url || '').slice(0, 70));
     out.title = ml.title;
   } catch (e) {
-    out.error = e instanceof Error ? e.message : String(e);
+    out.error = e instanceof Error ? e.message.slice(0, 140) : String(e);
+  }
+
+  // Teste independente: galeria via scraping da PDP (não usa API/escopo)
+  try {
+    const { scrapeMLGallery } = await import('@/lib/ml-scrape');
+    const scraped = await scrapeMLGallery(itemId);
+    out.scrapedCount = scraped.length;
+    out.scrapedUrls = scraped.slice(0, 6).map((u) => u.slice(0, 70));
+  } catch (e) {
+    out.scrapeError = e instanceof Error ? e.message.slice(0, 140) : String(e);
   }
 
   return NextResponse.json(out);

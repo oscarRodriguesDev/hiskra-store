@@ -148,6 +148,62 @@ export function parsePolycard(card: any): ScrapedMLProduct | null {
 }
 
 /**
+ * Extrai todas as imagens da galeria de um anúncio a partir da página
+ * pública do produto (PDP) — SEM usar a API (e sem credenciais/escopos).
+ *
+ * A PDP do ML embute o estado inicial da página num JSON "preloadedState"
+ * que contém as URLs de todas as fotos. Também encontramos as imagens
+ * diretamente no HTML (http2.mlstatic.com/D_NQ_NP_...). Retorna os
+ * URLs únicos das fotos, ou lista vazia se não conseguir extrair.
+ */
+export async function scrapeMLGallery(itemId: string): Promise<string[]> {
+  const permalink = `https://produto.mercadolivre.com.br/MLB-${itemId.replace(/^MLB-?/, '')}-galeria-_JM`;
+  return scrapeGalleryFromUrl(permalink, itemId);
+}
+
+/** Extrai a galeria de fotos de uma URL pública qualquer de produto. */
+export async function scrapeGalleryFromUrl(pageUrl: string, fallbackItemId?: string): Promise<string[]> {
+  try {
+    const res = await fetch(pageUrl, {
+      headers: { 'user-agent': UA, accept: 'text/html', 'accept-language': 'pt-BR' },
+      redirect: 'follow',
+      signal: AbortSignal.timeout(15000),
+    });
+    if (!res.ok) return [];
+    const html = await res.text();
+
+    const found = new Set<string>();
+
+    // 1) URLs diretas de imagem no HTML (mais confiável)
+    const reClassic = /https?:\/\/http2\.mlstatic\.com\/D_NQ_NP_[A-Za-z0-9_]+\-O\.jpg/g;
+    for (const m of html.matchAll(reClassic)) {
+      if (found.size < 20) found.add(m[0]);
+    }
+
+    // 2) JSON preloadedState com lista "pictures"
+    const rePre = /"pictures":\[(.*?)\]}/g;
+    for (const m of html.matchAll(rePre)) {
+      const urls = m[1].match(/https?:\/\/[^"\\]+\.jpg/g) || [];
+      for (const u of urls) {
+        if (u.startsWith('http') && found.size < 20) found.add(u.replace(/\\u002F/g, '/').replace(/\\\//g, '/'));
+      }
+    }
+
+    // 3) IDs de picture (sem URL montada) — monta a URL pública
+    const rePicId = /"id":"([A-Z0-9\-]+-[A-Z][A-Z0-9\-]+_[A-Z0-9]+-[A-Z])"/g;
+    for (const m of html.matchAll(rePicId)) {
+      if (found.size < 20) found.add(`https://http2.mlstatic.com/D_NQ_NP_${m[1]}-O.jpg`);
+    }
+
+    // Fallback: se achou só via URL com tamanho variável (-O->-O mantém), ok.
+    const out = [...found];
+    return out;
+  } catch {
+    return [];
+  }
+}
+
+/**
  * Busca produtos na vitrine social ou em qualquer página pública do ML
  * que embuta polycards. Retorna vazio se a página não tiver produtos.
  */

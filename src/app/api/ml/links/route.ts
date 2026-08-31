@@ -88,7 +88,18 @@ export async function POST(request: NextRequest) {
           .map((p) => p.secure_url || p.url)
           .filter(Boolean);
       } catch {
+        // API falhou (ex: 403 por escopo/leitura). Tenta a galeria via scraping da página pública.
         gallery = [];
+      }
+      // Fallback por scraping da página pública (não precisa de API/escopo)
+      if (gallery.length < 2) {
+        try {
+          const { scrapeMLGallery } = await import('@/lib/ml-scrape');
+          const scraped = await scrapeMLGallery(itemId);
+          if (scraped.length >= gallery.length) gallery = scraped;
+        } catch {
+          /* mantém o que tem */
+        }
       }
     }
     if (gallery.length === 0 && it.imageUrl) gallery = [it.imageUrl];
