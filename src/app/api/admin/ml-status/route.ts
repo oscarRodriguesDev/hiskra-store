@@ -18,29 +18,60 @@ export async function GET(request: NextRequest) {
 
   let connected = false;
   let message = '';
+  let tokenInfo: {
+    refreshExists: boolean;
+    refreshMasked: string; // ex: TG-xxxxkb (nunca o valor completo)
+    refreshSavedAt: string | null;
+    accessMasked: string;
+    expiresIn: number; // segundos restantes
+  } | null = null;
+
+  // Tenta renovar de verdade (se houver credenciais), e lê o token salvo
+  try {
+    if (hasClientId && hasClientSecret) {
+      const { refreshMLAccessToken } = await import('@/lib/mercadolivre');
+      await refreshMLAccessToken();
+    }
+    const bag = await getMLTokenBag();
+    if (bag && bag.refreshToken) {
+      const mask = (s: string) =>
+        !s ? '' : s.length <= 6 ? '•'.repeat(s.length) : s.slice(0, 3) + '•'.repeat(6) + s.slice(-3);
+      let savedAt: string | null = null;
+      try {
+        const { getMLTokenSavedAt } = await import('@/lib/ml-tokens');
+        savedAt = await getMLTokenSavedAt();
+      } catch { /* ignore */ }
+      tokenInfo = {
+        refreshExists: true,
+        refreshMasked: mask(bag.refreshToken),
+        refreshSavedAt: savedAt,
+        accessMasked: mask(bag.accessToken),
+        expiresIn: bag.expiresAt > Date.now() ? Math.round((bag.expiresAt - Date.now()) / 1000) : 0,
+      };
+    } else {
+      tokenInfo = {
+        refreshExists: false,
+        refreshMasked: '',
+        refreshSavedAt: null,
+        accessMasked: '',
+        expiresIn: 0,
+      };
+    }
+  } catch {
+    /* renovar falhou — reporta abaixo */
+  }
 
   if (!hasClientId || !hasClientSecret) {
     message =
       'As credenciais do app do Mercado Livre (Client ID/Secret) não estão configuradas na Vercel. Conecte para habilitar a galeria.';
+  } else if (tokenInfo?.refreshExists) {
+    connected = true;
+    message = tokenInfo.expiresIn > 0
+      ? 'API do Mercado Livre conectada — galeria de fotos ativa.'
+      : 'Token salvo, mas expirado — será renovado automaticamente no próximo uso.';
   } else {
-    try {
-      // Tenta renovar/obter o access token de verdade — falha se o refresh for inválido
-      const { refreshMLAccessToken } = await import('@/lib/mercadolivre');
-      await refreshMLAccessToken();
-
-      // Confirma com uma chamada real à API (ex: user_id do próprio app)
-      const { getMLTokenBag } = await import('@/lib/ml-tokens');
-      const bag = await getMLTokenBag();
-      connected = !!bag && !!bag.accessToken;
-      message = connected
-        ? 'API do Mercado Livre conectada — galeria de fotos ativa.'
-        : 'Não foi possível obter o token de acesso do Mercado Livre.';
-    } catch (e) {
-      connected = false;
-      message =
-        'O token do Mercado Livre expirou ou está inválido. Clique em "Conectar app do Mercado Livre" para autorizar novamente.';
-    }
+    message = 'Não há refresh_token salvo no banco. Acesse "Conectar app do Mercado Livre" para autorizar.';
   }
 
-  return NextResponse.json({ connected, message, hasCredentials: hasClientId && hasClientSecret });
+  return NextResponse.json({ connected, message, hasCredentials: hasClientId && hasClientSecret, token: tokenInfo });
 }

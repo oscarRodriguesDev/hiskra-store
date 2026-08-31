@@ -71,6 +71,17 @@ export async function clearMLTokenBag(): Promise<void> {
   });
 }
 
+/** Data/hora de quando o refresh_token foi salvo pela última vez (ISO) */
+export async function getMLTokenSavedAt(): Promise<string | null> {
+  if (!prisma) return null;
+  try {
+    const row = await prisma.appSetting.findUnique({ where: { key: K_REFRESH } });
+    return row?.updatedAt?.toISOString() ?? null;
+  } catch {
+    return null;
+  }
+}
+
 // Extra: expõe a versão para o cliente detectar mudanças (opcional)
 export async function getMLTokenVersion(): Promise<string> {
   return (await getSetting(K_VERSION)) || '';

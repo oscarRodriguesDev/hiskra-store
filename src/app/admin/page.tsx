@@ -53,7 +53,15 @@ export default function AdminLinksPage() {
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<SearchResult | null>(null);
   const [items, setItems] = useState<MLStoredItem[]>([]);
-  const [mlStatus, setMlStatus] = useState<{ connected: boolean; message: string; loading: boolean }>({
+  const [mlStatus, setMlStatus] = useState<{
+    connected: boolean;
+    message: string;
+    loading: boolean;
+    refreshMasked?: string;
+    refreshSavedAt?: string | null;
+    accessMasked?: string;
+    expiresIn?: number;
+  }>({
     connected: false,
     message: '',
     loading: true,
@@ -78,6 +86,10 @@ export default function AdminLinksPage() {
           connected: data?.connected ?? false,
           message: data?.message || '',
           loading: false,
+          refreshMasked: data?.token?.refreshMasked,
+          refreshSavedAt: data?.token?.refreshSavedAt,
+          accessMasked: data?.token?.accessMasked,
+          expiresIn: data?.token?.expiresIn,
         })
       )
       .catch(() => setMlStatus({ connected: false, message: '', loading: false }));
@@ -180,20 +192,29 @@ export default function AdminLinksPage() {
           </p>
 
           {/* Status da API do Mercado Livre (galeria de fotos) */}
-          {!mlStatus.loading && !mlStatus.connected && (
-            <div className="mt-3 text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-              <strong>Galeria de fotos:</strong> {mlStatus.message}{' '}
-              <a
-                href="/api/auth/ml/auth"
-                className="underline font-medium hover:text-amber-900"
-              >
-                Conectar app do Mercado Livre
-              </a>
-            </div>
-          )}
-          {mlStatus.connected && (
-            <div className="mt-3 text-sm text-green-700 bg-green-50 border border-green-200 rounded-lg px-3 py-2">
-              <strong>API do Mercado Livre conectada</strong> — galeria de fotos ativa.
+          {!mlStatus.loading && (
+            <div className={`mt-3 text-sm rounded-lg px-3 py-2 border ${mlStatus.connected ? 'text-green-800 bg-green-50 border-green-200' : 'text-amber-800 bg-amber-50 border-amber-200'}`}>
+              <strong>{mlStatus.connected ? 'API do Mercado Livre conectada' : 'Galeria de fotos:'}</strong>{' '}
+              {mlStatus.message}
+              {!mlStatus.connected && (
+                <>
+                  {' '}
+                  <a href="/api/auth/ml/auth" className="underline font-medium">
+                    Conectar app do Mercado Livre
+                  </a>
+                </>
+              )}
+              {mlStatus.refreshMasked && (
+                <div className="mt-1 font-mono text-xs opacity-80">
+                  refresh_token: <span>{mlStatus.refreshMasked}</span>
+                  {mlStatus.refreshSavedAt && (
+                    <span> · salvo em {new Date(mlStatus.refreshSavedAt).toLocaleString('pt-BR')}</span>
+                  )}
+                  {typeof mlStatus.expiresIn === 'number' && mlStatus.expiresIn > 0 && (
+                    <span> · expira em ~{Math.floor(mlStatus.expiresIn / 3600)}h</span>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </div>
