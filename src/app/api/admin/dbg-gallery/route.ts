@@ -16,10 +16,18 @@ export async function GET(request: NextRequest) {
   const out: Record<string, unknown> = { itemId, hasClientId: !!process.env.ML_CLIENT_ID, hasClientSecret: !!process.env.ML_CLIENT_SECRET };
 
   try {
-    const { refreshMLAccessToken, getMLProduct } = await import('@/lib/mercadolivre');
+    const { refreshMLAccessToken, getMLProduct, getMLMe } = await import('@/lib/mercadolivre');
     await refreshMLAccessToken().catch((e: unknown) => {
       out.refreshError = e instanceof Error ? e.message : String(e);
     });
+
+    // Testa um endpoint que não precisa de escopo de produto (conta)
+    try {
+      const me = await getMLMe();
+      out.me = me;
+    } catch (e) {
+      out.meError = e instanceof Error ? e.message.slice(0, 200) : String(e);
+    }
 
     const ml = await getMLProduct(itemId);
     out.pictures = (ml.pictures || []).length;

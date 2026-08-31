@@ -299,6 +299,11 @@ export async function getMLProduct(itemId: string): Promise<MLProduct> {
   return mlFetch<MLProduct>(`/items/${itemId}`);
 }
 
+// Conta logada no token (teste de validação sem escopo de produto)
+export async function getMLMe(): Promise<{ id: number; nickname: string; first_name?: string }> {
+  return mlFetch<{ id: number; nickname: string; first_name?: string }>(`/users/me`);
+}
+
 // Extrair o ID do item a partir da URL do anúncio ou do próprio ID
 export function extractMLItemId(input: string): string | null {
   const trimmed = input.trim();
