@@ -1,0 +1,33 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { isAdminRequest } from '@/lib/admin-auth';
+
+export const dynamic = 'force-dynamic';
+
+/**
+ * Temporário: diagnóstico da galeria. GET /api/admin/dbg-gallery?itemId=MLB...
+ * Autenticado. Mostra o resultado cru da busca de fotos no ML.
+ */
+export async function GET(request: NextRequest) {
+  if (!(await isAdminRequest(request))) {
+    return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 });
+  }
+  const itemId = request.nextUrl.searchParams.get('itemId') || 'MLB5418664996';
+
+  const out: Record<string, unknown> = { itemId, hasClientId: !!process.env.ML_CLIENT_ID, hasClientSecret: !!process.env.ML_CLIENT_SECRET };
+
+  try {
+    const { refreshMLAccessToken, getMLProduct } = await import('@/lib/mercadolivre');
+    await refreshMLAccessToken().catch((e: unknown) => {
+      out.refreshError = e instanceof Error ? e.message : String(e);
+    });
+
+    const ml = await getMLProduct(itemId);
+    out.pictures = (ml.pictures || []).length;
+    out.urls = (ml.pictures || []).slice(0, 6).map((p) => (p.secure_url || p.url || '').slice(0, 70));
+    out.title = ml.title;
+  } catch (e) {
+    out.error = e instanceof Error ? e.message : String(e);
+  }
+
+  return NextResponse.json(out);
+}
