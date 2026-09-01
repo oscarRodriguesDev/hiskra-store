@@ -9,6 +9,7 @@ interface MLStoredItem {
   price: number | null;
   currencyId: string;
   image: string;
+  images?: string[];
   permalink: string;
   affiliateLink: string;
   showInStore: boolean;
@@ -48,6 +49,7 @@ type SearchResult =
 
 export default function AdminLinksPage() {
   const [url, setUrl] = useState('');
+  const [imagesText, setImagesText] = useState('');
   const [searching, setSearching] = useState(false);
   const [savingId, setSavingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -115,7 +117,7 @@ export default function AdminLinksPage() {
     }
   }
 
-  async function addToStore(payload: { url?: string; item?: ScrapedMLProduct }) {
+  async function addToStore(payload: { url?: string; item?: ScrapedMLProduct; images?: string[] }) {
     setSavingId(payload.url || payload.item?.permalink || 'saving');
     setError(null);
     try {
@@ -135,6 +137,16 @@ export default function AdminLinksPage() {
     } finally {
       setSavingId(null);
     }
+  }
+
+  // Separa as URLs de imagem digitadas (vírgula, espaço ou quebra de linha)
+  const parsedImages = imagesText
+    .split(/[\n,]+/)
+    .map((s) => s.trim())
+    .filter((s) => /^https?:\/\//i.test(s));
+
+  function addWithImages(payload: { url?: string; item?: ScrapedMLProduct }) {
+    addToStore(parsedImages.length ? { ...payload, images: parsedImages } : payload);
   }
 
   async function handleToggle(item: MLStoredItem) {
@@ -245,6 +257,26 @@ export default function AdminLinksPage() {
           {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
         </div>
 
+        {/* URLs de imagem manuais (galeria personalizada) */}
+        <div className="mt-4 bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
+          <label htmlFor="ml-images" className="block text-sm font-medium text-gray-700 mb-2">
+            URLs das fotos (opcional) — galeria personalizada
+          </label>
+          <textarea
+            id="ml-images"
+            rows={3}
+            value={imagesText}
+            onChange={(e) => setImagesText(e.target.value)}
+            placeholder={'Cole aqui as URLs das fotos que quer mostrar\n(uma por linha ou separadas por vírgula)\nEx.:\nhttps://http2.mlstatic.com/D_NQ_NP_111111-MLB1_O.jpg\nhttps://http2.mlstatic.com/D_NQ_NP_222222-MLB1_O.jpg'}
+            className="w-full px-4 py-2.5 rounded-lg border border-gray-300 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent font-mono text-sm"
+          />
+          <p className="mt-2 text-xs text-gray-500">
+            {parsedImages.length > 0
+              ? `✓ ${parsedImages.length} URL${parsedImages.length !== 1 ? 's' : ''} de imagem vão ser usadas como galeria do produto.`
+              : 'Se preenchido, estas fotos substituem a galeria automática do Mercado Livre.'}
+          </p>
+        </div>
+
         {/* Resultado: produto único (API) ou lista da vitrine (scraping) */}
         {result && result.type === 'single' && (
           <div className="mt-6 bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
@@ -281,7 +313,7 @@ export default function AdminLinksPage() {
             </div>
             <div className="mt-4 flex justify-end">
               <button
-                onClick={() => addToStore({ url: result.itemId })}
+                onClick={() => addWithImages({ url: result.itemId })}
                 disabled={savingId !== null}
                 className="px-6 py-2.5 rounded-lg bg-gray-900 text-white font-medium hover:bg-gray-800 disabled:opacity-50 transition-colors"
               >
@@ -324,7 +356,7 @@ export default function AdminLinksPage() {
                         ) : null}
                       </div>
                       <button
-                        onClick={() => addToStore({ item: p })}
+                        onClick={() => addWithImages({ item: p })}
                         disabled={savingId !== null}
                         className="px-4 py-2 rounded-lg bg-gray-900 text-white text-sm font-medium hover:bg-gray-800 disabled:opacity-50 transition-colors"
                       >
@@ -369,8 +401,26 @@ export default function AdminLinksPage() {
                     <p className="text-sm font-bold text-gray-700 mt-0.5">
                       {formatPrice(item.price, item.currencyId)}
                     </p>
+                    <p className="text-xs text-gray-400 mt-0.5">
+                      {(item.images || []).length} foto{(item.images || []).length !== 1 ? 's' : ''}
+                    </p>
                   </div>
                   <div className="flex flex-col sm:flex-row items-center gap-2 flex-shrink-0">
+                    {parsedImages.length > 0 && (
+                      <button
+                        onClick={async () => {
+                          const res = await fetch(`/api/ml/links/${item.itemId}`, {
+                            method: 'PATCH',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ images: parsedImages }),
+                          });
+                          if (res.ok) { await loadItems(); setImagesText(''); }
+                        }}
+                        className="text-sm text-emerald-700 hover:text-emerald-900 font-medium"
+                      >
+                        Aplicar fotos
+                      </button>
+                    )}
                     <label className="flex items-center gap-2 cursor-pointer text-sm text-gray-700">
                       <input
                         type="checkbox"

@@ -7,6 +7,7 @@ export const dynamic = 'force-dynamic';
 /**
  * PATCH /api/ml/links/:itemId
  * { "showInStore": true | false } — mostra/oculta na loja
+ * { "images": ["https://..." ] } — define a galeria de fotos manualmente
  */
 export async function PATCH(
   request: NextRequest,
@@ -18,14 +19,22 @@ export async function PATCH(
   }
 
   const { itemId } = await params;
-  let body: { showInStore?: boolean };
+  let body: { showInStore?: boolean; images?: string[] };
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: 'Corpo da requisição inválido. Envie JSON com { "showInStore": true|false }.' }, { status: 400 });
+    return NextResponse.json({ error: 'Corpo da requisição inválido.' }, { status: 400 });
   }
 
-  const item = await updateStoredItem(itemId, { showInStore: body.showInStore });
+  const patch: { showInStore?: boolean; images?: string[] } = {};
+  if (typeof body.showInStore === 'boolean') patch.showInStore = body.showInStore;
+  if (Array.isArray(body.images)) {
+    patch.images = body.images
+      .map((u) => u.trim())
+      .filter((u) => /^https?:\/\//i.test(u));
+  }
+
+  const item = await updateStoredItem(itemId, patch);
   if (!item) {
     return NextResponse.json({ error: 'Item não encontrado.' }, { status: 404 });
   }

@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 });
   }
 
-  let body: { url?: string; item?: ScrapedMLProduct };
+  let body: { url?: string; item?: ScrapedMLProduct; images?: string[] };
   try {
     body = await request.json();
   } catch {
@@ -56,6 +56,11 @@ export async function POST(request: NextRequest) {
       { status: 400 }
     );
   }
+
+  // URLs de imagem manuais (o usuário aponta exatamente as fotos que quer)
+  const manualImages = (body.images || [])
+    .map((u) => u.trim())
+    .filter((u) => /^https?:\/\//i.test(u));
 
   // ── Fluxo 1: dados prontos do scraping (sem credenciais) ──
   if (body.item) {
@@ -79,8 +84,8 @@ export async function POST(request: NextRequest) {
     const itemId = it.itemId || it.productId || it.userProductId || it.permalink;
 
     // Busca as fotos da galeria via API do ML (se houver credencial); senão, cai na imagem única do card
-    let gallery: string[] = [];
-    if (itemId && /^ML[A-Z]\d{7,}$/.test(itemId)) {
+    let gallery: string[] = manualImages.length ? manualImages : [];
+    if (gallery.length === 0 && itemId && /^ML[A-Z]\d{7,}$/.test(itemId)) {
       try {
         const { getMLProduct } = await import('@/lib/mercadolivre');
         const ml = await getMLProduct(itemId);
@@ -155,11 +160,13 @@ export async function POST(request: NextRequest) {
     }
 
     const image = mlProduct.pictures?.[0]?.secure_url || mlProduct.pictures?.[0]?.url || product.images[0] || '';
-    const gallery = (mlProduct.pictures || [])
-      .map((p) => p.secure_url || p.url)
-      .filter(Boolean).length > 0
-      ? (mlProduct.pictures || []).map((p) => p.secure_url || p.url).filter(Boolean)
-      : product.images;
+    const gallery = manualImages.length
+      ? manualImages
+      : (mlProduct.pictures || [])
+          .map((p) => p.secure_url || p.url)
+          .filter(Boolean).length > 0
+        ? (mlProduct.pictures || []).map((p) => p.secure_url || p.url).filter(Boolean)
+        : product.images;
 
     const stored = await addStoredItem({
       itemId: mlProduct.id,
