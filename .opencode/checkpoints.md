@@ -5,6 +5,23 @@ Consulte no início de cada interação para saber onde parou.
 
 ---
 
+## Sessão 2026-08-31 (final) — Galeria por URLs manuais (solução definitiva)
+
+- **Decisão**: abandonar a galeria automática via API do ML (bloqueada por escopo → 403 `access_denied` em `GET /items/{id}` para itens de terceiros) e via scraping da PDP (cai em anti-bot → `/gz/account-verification`). O diagnóstico definitivo: `GET /users/me` funciona (conta válida), mas `GET /items/{id}` dá 403 — falta escopo de leitura real aprovado no app; mesmo marcando `VIS`, apps não-aprovados não leem itens de outros vendedores.
+- **Solução adotada**: o admin cola **URLs de imagem manualmente** para compor a galeria. Controle total, sem depender de API/scraping.
+  - Backend: `POST /api/ml/links` aceita `images?: string[]` (prioridade sobre galeria automática) nos fluxos 1 e 2. `PATCH /api/ml/links/:itemId` aceita `images?: string[]` (define galeria de produto já salvo).
+  - Frontend `/admin`: novo campo textarea "URLs das fotos (opcional)" (uma por linha ou vírgula). Ao adicionar, usa essas URLs; em item salvo, botão verde "Aplicar fotos" aplica as URLs preenchidas (limpa o campo após). Lista mostra nº de fotos por item.
+- **Fix visual da página `/product/[slug]`** (`ProductDetailClient.tsx`):
+  - `toMLOriginal(url)`: converte thumbnail do ML (`-F/-I/-P.webp`) → original (`-O.jpg`), remove `_2X_` — foto principal fica nítida/proporcional (testado: `-O.jpg` retorna `200 image/jpeg`).
+  - Trocou `next/image` por `<img>` nativo (principal `object-contain`, miniatura `object-cover`) p/ evitar deformação.
+  - Removido selo "Compra garantida pelo Mercado Livre".
+- Token ML **confirmado salvo no banco Turso** (`app_settings`: `ml_access_token`, `ml_refresh_token` TG-..., expirations; data 2026-08-31). `ml-status` no admin mostra o token mascarado + data/validade.
+- **Limpeza**: removida rota temporária de diagnóstico `/api/admin/dbg-gallery` e `getMLMe`.
+- Build OK. Produtos atuais: Kit Teclado e Mouse Sem Fio (`MLB6926073130`, 2 fotos manuais) renderizando galeria OK.
+- Pendente (se um dia quiser galeria automática): habilitar/aprovar escopo de leitura de itens no app do ML e reautorizar `/api/auth/ml/auth`. Sem isso, usar URLs manuais.
+
+---
+
 ## Sessão 2026-08-31 — Bug crítico do regex de ID do ML (galeria de 1 foto)
 
 - Causa raiz da "galeria de 1 foto": o regex de validação de ID do item do ML estava errado. Usava `ML[BACDEHMOUV]{2}\d{6,}$` (que exige 2 letras após `ML`), mas o formato REAL dos IDs do ML é `ML` + **1 letra** de site + dígitos (ex: `MLB5761444412`, `MLA`, `MLC`) e tem **7+ dígitos**. Com o regex errado, `getMLProduct(itemId)` NUNCA era chamado → caía sempre no fallback de 1 foto.
