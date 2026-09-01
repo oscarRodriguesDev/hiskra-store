@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
 import type { MLStoredItem } from '@/lib/ml-store';
 
@@ -9,8 +8,25 @@ interface Props {
   item: MLStoredItem;
 }
 
+/**
+ * Normaliza URLs de imagem do Mercado Livre:
+ * - Thumbnails pequenos (-F, -I, -P) → original (-O)
+ * - .webp → .jpg (maior compatibilidade/qualidade)
+ * - Remove o sufixo _2X_ (retina) que quebra a montagem do original
+ * Mantém URLs de fora do ML intactas.
+ */
+function toMLOriginal(url: string): string {
+  if (!url) return url;
+  if (!/mlstatic\.com/i.test(url)) return url;
+  return url
+    .replace(/_2X_/g, '')
+    .replace(/-(F|I|P|O)\.(webp|jpg|jpeg|png)$/i, '-O.jpg')
+    .replace(/-(L|M|S)\.([a-z]+)$/i, (_, sz, ext) => (sz === 'O' ? `-O.${ext}` : `-O.jpg`));
+}
+
 export function ProductDetailClient({ item }: Props) {
-  const images = item.images && item.images.length > 0 ? item.images : [item.image || ''];
+  const rawImages = item.images && item.images.length > 0 ? item.images : [item.image || ''];
+  const images = rawImages.map(toMLOriginal).filter(Boolean);
   const [selected, setSelected] = useState(0);
 
   const formatPrice = (v: number | null) => {
@@ -43,15 +59,13 @@ export function ProductDetailClient({ item }: Props) {
         <div className="grid lg:grid-cols-2 gap-12">
           {/* Galeria */}
           <div className="space-y-4">
-            <div className="aspect-square bg-gray-50 rounded-xl overflow-hidden relative">
+            <div className="relative aspect-square w-full bg-gray-50 rounded-xl overflow-hidden">
               {images[selected] ? (
-                <Image
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img
                   src={images[selected]}
                   alt={item.title}
-                  fill
-                  className="object-contain"
-                  priority
-                  sizes="(max-width: 1024px) 100vw, 50vw"
+                  className="absolute inset-0 w-full h-full object-contain"
                 />
               ) : (
                 <div className="absolute inset-0 flex items-center justify-center text-gray-400">Sem imagem</div>
@@ -70,18 +84,17 @@ export function ProductDetailClient({ item }: Props) {
                   <button
                     key={index}
                     onClick={() => setSelected(index)}
-                    className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-colors ${
+                    className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-colors bg-gray-100 ${
                       index === selected ? 'border-gray-900' : 'border-transparent hover:border-gray-300'
                     }`}
                     aria-label={`Ver imagem ${index + 1}`}
                     aria-current={index === selected ? 'true' : 'false'}
                   >
-                    <Image
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
                       src={img}
                       alt={`${item.title} - imagem ${index + 1}`}
-                      fill
-                      className="object-cover"
-                      sizes="80px"
+                      className="w-full h-full object-cover"
                     />
                   </button>
                 ))}
